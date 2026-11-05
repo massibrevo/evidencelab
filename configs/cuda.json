@@ -1,0 +1,1 @@
+{"model_id":"Qwen/Qwen3.5-4B","revision":"main","quantization":"nf4","max_input_tokens":4096,"max_new_tokens":384,"lora_rank":16,"lora_alpha":32,"seed":42,"description":"Opt-in CUDA profile; verify available VRAM and operators"}

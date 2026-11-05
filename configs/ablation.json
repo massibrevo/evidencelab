@@ -1,0 +1,1 @@
+{"dataset":"scifact-demo-v1","k":3,"seed":42,"baseline":{"mode":"bm25","rewrite":false,"rerank":false},"interventions":[{"mode":"hybrid"},{"mode":"hybrid","rewrite":true},{"mode":"graph"},{"mode":"hybrid","rerank":true,"requires":"EVIDENCELAB_DENSE=1"}],"note":"Change one intervention at a time; graph and dense paths are distinct experiments"}

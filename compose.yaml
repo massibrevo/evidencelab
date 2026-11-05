@@ -1,0 +1,16 @@
+services:
+  lab:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - evidencelab:/data/lab
+    environment:
+      EVIDENCELAB_DATA: /app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+volumes:
+  evidencelab:

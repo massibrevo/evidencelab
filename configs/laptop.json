@@ -1,0 +1,1 @@
+{"model_id":"Qwen/Qwen3.5-0.8B","revision":"main","quantization":"none","max_input_tokens":4096,"max_new_tokens":384,"retrieval":"hybrid","dense":false,"seed":42,"description":"Optional fp16 MPS / fp32 CPU inference; default app remains extractive"}

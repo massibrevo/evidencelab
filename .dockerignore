@@ -1,0 +1,10 @@
+.git
+.venv
+.evidencelab
+web/node_modules
+web/dist
+artifacts
+mlruns
+data/downloads
+__pycache__
+*.zip
