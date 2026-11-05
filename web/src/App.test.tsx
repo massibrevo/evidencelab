@@ -161,21 +161,20 @@ describe("Research workstation", () => {
       ).not.toBeInTheDocument(),
     );
   });
-  it("persists the chosen colour theme and layout density", async () => {
+  it("persists layout density without decorative theme controls", async () => {
     render(<App />);
     await screen.findByText("Local system online");
-    fireEvent.click(screen.getByRole("button", { name: "Ocean colour theme" }));
-    expect(document.querySelector(".app")).toHaveAttribute(
-      "data-theme",
-      "ocean",
-    );
     expect(
-      JSON.parse(localStorage.getItem("evidencelab.appearance") ?? "{}").theme,
-    ).toBe("ocean");
+      screen.queryByRole("button", { name: /colour theme/ }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Use compact layout" }));
     expect(document.querySelector(".app")).toHaveAttribute(
       "data-density",
       "compact",
     );
+    expect(
+      JSON.parse(localStorage.getItem("evidencelab.appearance") ?? "{}")
+        .density,
+    ).toBe("compact");
   });
 });

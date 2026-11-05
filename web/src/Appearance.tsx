@@ -1,10 +1,8 @@
 import { Maximize2, Minimize2 } from "lucide-react";
 export type Appearance = {
-  theme: "aurora" | "ocean" | "mint" | "ember";
   density: "comfortable" | "compact";
 };
 export const defaultAppearance: Appearance = {
-  theme: "aurora",
   density: "comfortable",
 };
 export function readAppearance(): Appearance {
@@ -12,12 +10,8 @@ export function readAppearance(): Appearance {
     const value = JSON.parse(
       localStorage.getItem("evidencelab.appearance") ?? "null",
     );
-    if (
-      value &&
-      ["aurora", "ocean", "mint", "ember"].includes(value.theme) &&
-      ["comfortable", "compact"].includes(value.density)
-    )
-      return value;
+    if (value && ["comfortable", "compact"].includes(value.density))
+      return { density: value.density };
   } catch {}
   return defaultAppearance;
 }
@@ -30,18 +24,6 @@ export default function AppearanceControls({
 }) {
   return (
     <div className="appearance-controls" aria-label="Workspace appearance">
-      <div className="theme-swatches">
-        {(["aurora", "ocean", "mint", "ember"] as const).map((theme) => (
-          <button
-            aria-label={`${theme[0].toUpperCase() + theme.slice(1)} colour theme`}
-            title={`${theme} theme`}
-            aria-pressed={value.theme === theme}
-            className={`theme-swatch ${theme} ${value.theme === theme ? "selected" : ""}`}
-            key={theme}
-            onClick={() => onChange({ ...value, theme })}
-          />
-        ))}
-      </div>
       <button
         className="icon-button density-button"
         aria-label={

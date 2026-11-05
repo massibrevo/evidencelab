@@ -4,10 +4,10 @@ This is an engineering verification report, not a model-quality benchmark. Execu
 
 | Check | Observed result |
 |---|---|
-| Core Python tests | 41 passed; two explicit optional integrations skipped by default |
+| Core Python tests | 43 passed; two explicit optional integrations skipped by default |
 | Explicit native Qwen compatibility test | Passed on a randomly initialized miniature Qwen3.5 configuration; full multimodal-to-text checkpoint load, no missing text weights, forward pass, generation, one adapter optimization step, adapter save/reload and equal logits |
 | Embedded Qdrant integration | Passed with actual local Qdrant and deterministic test vectors; no neural quality claim |
-| Dashboard interaction tests | 11 passed; original workflows plus notebook editing/execution controls, chart options, model protocol filtering, theme persistence |
+| Dashboard interaction tests | 13 passed; original workflows plus notebook editing/execution controls, chart options, model protocol filtering, layout persistence, notebook cell conversion and empirical percentile guides |
 | TypeScript + production build | Passed; Plotly remains a separately loaded ~507 kB gzip chart bundle |
 | Explicit notebook kernel integration | Passed; persistent variables, real Matplotlib PNG output, saved revisions and kernel cleanup |
 | Scientific figure exports | PNG, SVG, PDF and CSV verified from actual reference/run records; exported PNG visually inspected |
@@ -19,7 +19,8 @@ This is an engineering verification report, not a model-quality benchmark. Execu
 | Wheel/source distribution | 0.2.0 wheel and source distribution built; wheel inspected for offline demo data, four notebooks and reference experiment |
 | Browser end-to-end | Real API query → citations → exact highlighted source; real retrieval benchmark → CIs; dynamic LangGraph execution → seven-node trace; Plotly corpus projection; broad benchmark recipe panel; integrated notebook Run all with real stdout, PNG plots, saved outputs; Plotly/Matplotlib observatory and actual PDF download |
 | Responsive layout | Desktop breakpoint and 390 px phone breakpoint inspected; phone document width equals viewport width; mobile navigation exercised |
-| Browser console | No error/warning records during final inspected workflow |
+| Browser console | Final notebook execution and figure workflow completed; development route switches emitted transient React Flow sizing warnings. Graphs were visually inspected after layout; no execution errors in the final notebook workflow. |
+| Frontend dependency audit | npm audit reported zero known vulnerabilities after patching the test runner and deduplicating KaTeX |
 | Docker | Configuration supplied; image not executed because the local Docker daemon is unavailable |
 
 ## Reproduce verification

@@ -99,8 +99,8 @@ export default function ConceptGraph({
           ),
         },
         style: {
-          background: "#1c2a45",
-          borderColor: "#506b94",
+          background: "#f4f7fb",
+          borderColor: "#b7c8dd",
           width: 175,
           borderRadius: 6,
         },
@@ -117,8 +117,8 @@ export default function ConceptGraph({
           stroke: chartColors[concepts.indexOf(e.target) % chartColors.length],
           strokeWidth: 1,
         },
-        labelStyle: { fill: "#bcc8e2", fontSize: 8 },
-        labelBgStyle: { fill: "#18243a" },
+        labelStyle: { fill: "#475569", fontSize: 8 },
+        labelBgStyle: { fill: "#ffffff" },
         markerEnd: { type: MarkerType.ArrowClosed, width: 10, height: 10 },
       }));
     return { nodes, edges };
@@ -185,12 +185,12 @@ export default function ConceptGraph({
           }}
           fitView
           fitViewOptions={{ padding: 0.2 }}
-          colorMode="dark"
+          colorMode="light"
           nodesConnectable={false}
           minZoom={0.2}
           maxZoom={1.7}
         >
-          <Background color="#354462" gap={20} />
+          <Background color="#dce3ec" gap={20} />
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>

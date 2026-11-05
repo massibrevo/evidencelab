@@ -17,12 +17,12 @@ export default function Plot({
       el,
       data,
       {
-        paper_bgcolor: "transparent",
-        plot_bgcolor: "transparent",
-        font: { family: "monospace", color: "#9baac8", size: 11 },
+        paper_bgcolor: "#ffffff",
+        plot_bgcolor: "#ffffff",
+        font: { family: "Arial, sans-serif", color: "#374151", size: 12 },
         margin: { l: 45, r: 20, t: 20, b: 40 },
-        xaxis: { gridcolor: "#2b3550", zeroline: false },
-        yaxis: { gridcolor: "#2b3550", zeroline: false },
+        xaxis: { gridcolor: "#e5e7eb", zeroline: false },
+        yaxis: { gridcolor: "#e5e7eb", zeroline: false },
         ...layout,
       },
       {

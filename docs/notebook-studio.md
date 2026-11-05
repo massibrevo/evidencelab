@@ -1,6 +1,6 @@
 # Integrated notebook studio
 
-The control center now includes a real `.ipynb` editor, Python syntax highlighting, Markdown and LaTeX rendering, cell controls, execution outputs, and local notebook persistence.
+The control center includes a Jupyter-style white notebook page with grey code cells, blue execution prompts, green Python keywords, a document tab and compact toolbar. It provides a real `.ipynb` editor, Python syntax highlighting, Markdown and LaTeX rendering, cell controls, execution outputs, and local notebook persistence.
 
 ```bash
 pip install -e '.[notebooks]'
@@ -13,7 +13,8 @@ Without `--notebooks`, reading, editing, duplicating, importing, saving, and dow
 
 ## Editing and execution
 
-- Choose one of the four learning templates or create a new investigation.
+- Choose one of the four learning templates or create a new investigation. Filter the notebook list by name.
+- Insert a cell from the toolbar and convert the selected cell between Code and Markdown using its type selector. Converting clears incompatible execution outputs.
 - Edit Python with CodeMirror. Double-click a Markdown cell or use Edit to change its source. Markdown supports tables, links and LaTeX; raw HTML is not rendered.
 - Save with the toolbar or Cmd/Ctrl-S. Run the selected code cell with Run cell or Cmd/Ctrl-Enter; Run all executes code cells sequentially. Shift-Enter also runs the selected code cell.
 - Add Python/Markdown cells, move them, delete them, or undo the last cell deletion.

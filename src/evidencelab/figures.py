@@ -17,10 +17,25 @@ os.environ.setdefault(
 FIGURE_LOCK = RLock()
 FIGURE_CACHE: OrderedDict[tuple, bytes] = OrderedDict()
 PALETTES = {
-    "spectrum": ["#9d8dff", "#4bd6ca", "#ffb86c", "#f57eaf", "#6aafff"],
-    "ocean": ["#56a8ff", "#5cd9d0", "#9bc7ff", "#8388ff", "#af8aff"],
+    "spectrum": ["#1f77b4", "#ff7f0e", "#87929d", "#456d94", "#d2a05a", "#667481"],
+    "vivid": ["#12bfb4", "#ff7b58", "#ff9b05", "#8dcf27", "#497fd1"],
+    "muted": ["#597dbb", "#d58b5e", "#72b76a", "#c76e70", "#967bb1", "#87684c"],
+    "ocean": ["#2166ac", "#1b9eae", "#6488ca", "#7658a4", "#3b84a0"],
     "accessible": ["#0072B2", "#E69F00", "#009E73", "#CC79A7", "#56B4E9"],
 }
+
+
+def distribution_guides(values: list[float]) -> list[tuple[str, float]]:
+    """Empirical percentiles of the displayed values; never external thresholds."""
+    grouped = OrderedDict()
+    for label, q in (("P10", 0.1), ("P50", 0.5), ("P90", 0.9)):
+        value = float(np.quantile(values, q))
+        key = round(value, 12)
+        if key in grouped:
+            grouped[key][0].append(label)
+        else:
+            grouped[key] = ([label], value)
+    return [(" / ".join(labels), value) for labels, value in grouped.values()]
 
 
 def render_benchmark(
@@ -28,10 +43,17 @@ def render_benchmark(
     chart: str = "scores",
     metric: str = "recall",
     fmt: str = "png",
-    theme: str = "dark",
+    theme: str = "paper",
     palette: str = "spectrum",
+    value_labels: bool = True,
+    guides: bool = True,
+    intervals: bool = True,
 ) -> bytes:
-    if chart not in {"scores", "latency", "heatmap", "tradeoff"} or metric not in {"recall", "mrr", "ndcg"}:
+    if chart not in {"scores", "ranking", "latency", "heatmap", "tradeoff"} or metric not in {
+        "recall",
+        "mrr",
+        "ndcg",
+    }:
         raise ValueError("Unsupported figure or metric")
     if fmt not in {"png", "svg", "pdf"} or theme not in {"dark", "paper"} or palette not in PALETTES:
         raise ValueError("Unsupported figure export options")
@@ -42,6 +64,9 @@ def render_benchmark(
         fmt,
         theme,
         palette,
+        value_labels,
+        guides,
+        intervals,
     )
     with FIGURE_LOCK:
         if cache_key in FIGURE_CACHE:
@@ -53,7 +78,7 @@ def render_benchmark(
         bg, ink, muted, grid = (
             ("#12182b", "#e9edff", "#9aa9c8", "#303b56")
             if theme == "dark"
-            else ("#ffffff", "#17233e", "#51617b", "#e1e6ef")
+            else ("#ffffff", "#24292e", "#565e69", "#e1e4e8")
         )
         colors = PALETTES[palette]
         fig = Figure(figsize=(11, 6.7), facecolor=bg, layout="constrained")
@@ -68,21 +93,46 @@ def render_benchmark(
                 values = [r["metrics"][key]["mean"] for r in rows]
                 lows = [max(0, v - r["metrics"][key]["low"]) for v, r in zip(values, rows)]
                 highs = [max(0, r["metrics"][key]["high"] - v) for v, r in zip(values, rows)]
-                ax.bar(
+                bars = ax.bar(
                     x + (j - 1) * 0.24,
                     values,
                     0.22,
                     color=colors[j],
                     label=f"{key.upper()}@{run['k']}",
-                    yerr=[lows, highs],
+                    yerr=[lows, highs] if intervals else None,
                     capsize=3,
                     error_kw={"ecolor": muted, "linewidth": 0.8},
                 )
+                if value_labels:
+                    ax.bar_label(bars, fmt="%.3f", padding=4, fontsize=8, color=ink)
             ax.set_xticks(x, labels)
-            ax.set_ylim(0, 1.12)
-            ax.set_ylabel("Mean score · 95% query bootstrap interval", color=muted)
-            legend = ax.legend(frameon=False, labelcolor=ink, loc="upper right")
+            ax.set_ylim(0, 1.18)
+            ax.set_ylabel(
+                "Mean score" + (" · 95% query bootstrap interval" if intervals else ""), color=muted
+            )
+            legend = ax.legend(frameon=False, labelcolor=ink, loc="upper right", ncol=3, fontsize=8)
             legend.set_in_layout(True)
+        elif chart == "ranking":
+            ranked = sorted(rows, key=lambda r: r["metrics"][metric]["mean"], reverse=True)
+            scores = [r["metrics"][metric] for r in ranked]
+            bars = ax.bar(
+                x,
+                [s["mean"] for s in scores],
+                color=[colors[i % len(colors)] for i in range(len(rows))],
+                yerr=[
+                    [max(0, s["mean"] - s["low"]) for s in scores],
+                    [max(0, s["high"] - s["mean"]) for s in scores],
+                ]
+                if intervals
+                else None,
+                capsize=3,
+                error_kw={"ecolor": muted, "linewidth": 0.8},
+            )
+            if value_labels:
+                ax.bar_label(bars, fmt="%.3f", padding=5, fontsize=9, color=ink)
+            ax.set_xticks(x, [r["mode"].upper() for r in ranked])
+            ax.set_ylabel(f"{metric.upper()}@{run['k']}", color=muted)
+            ax.set_ylim(0, 1.18)
         elif chart == "latency":
             values = [[q["latency_ms"] for q in r["queries"]] for r in rows]
             boxes = ax.boxplot(
@@ -112,7 +162,10 @@ def render_benchmark(
             query_ids = [q["query_id"] for q in rows[0]["queries"]]
             lookup = [{q["query_id"]: q["metrics"][metric] for q in r["queries"]} for r in rows]
             values = np.array([[r.get(q, np.nan) for q in query_ids] for r in lookup])
-            image = ax.imshow(values, vmin=0, vmax=1, cmap="viridis", aspect="auto")
+            from matplotlib.colors import LinearSegmentedColormap
+
+            cmap = LinearSegmentedColormap.from_list("evidencelab", ["#f5f6f7", colors[0]])
+            image = ax.imshow(values, vmin=0, vmax=1, cmap=cmap, aspect="auto")
             ax.set_yticks(np.arange(len(labels)), labels)
             ax.set_xticks(np.arange(len(query_ids)), query_ids, rotation=65, fontsize=7)
             ax.set_xlabel("SciFact query ID · aligned across strategies", color=muted)
@@ -126,7 +179,9 @@ def render_benchmark(
                 ax.errorbar(
                     latency,
                     score["mean"],
-                    yerr=[[max(0, score["mean"] - score["low"])], [max(0, score["high"] - score["mean"])]],
+                    yerr=[[max(0, score["mean"] - score["low"])], [max(0, score["high"] - score["mean"])]]
+                    if intervals
+                    else None,
                     fmt="o",
                     color=colors[i % len(colors)],
                     markersize=9,
@@ -144,6 +199,25 @@ def render_benchmark(
             ax.set_ylabel(f"{metric.upper()}@{run['k']} · higher is better", color=muted)
             ax.set_ylim(0, 1.1)
             ax.margins(x=0.25)
+        if guides and chart != "heatmap":
+            samples = (
+                [q["latency_ms"] for r in rows for q in r["queries"]]
+                if chart == "latency"
+                else [r["metrics"][metric]["mean"] for r in rows]
+            )
+            for i, (label, value) in enumerate(distribution_guides(samples)):
+                ax.axhline(value, color="#32924b", linestyle="--", linewidth=0.9, alpha=0.8)
+                ax.annotate(
+                    f"{label} · {value:.3f}" + (" ms" if chart == "latency" else ""),
+                    (0.99, value),
+                    xycoords=("axes fraction", "data"),
+                    xytext=(0, 4 + i * 11),
+                    textcoords="offset points",
+                    ha="right",
+                    fontsize=7,
+                    color="#26723b",
+                    bbox={"facecolor": bg, "edgecolor": "none", "alpha": 0.9, "pad": 1},
+                )
         if chart != "heatmap":
             ax.grid(axis="y", color=grid, alpha=0.6, linewidth=0.6)
             ax.set_axisbelow(True)
@@ -162,8 +236,15 @@ def render_benchmark(
             pad=17,
         )
         fig.supxlabel(
-            f"Selected SciFact dev subset · retrieval, not claim-verification accuracy\n"
-            f"Corpus {run['corpus_sha256'][:16]} · run {run['id'][:12]}",
+            "Selected SciFact dev subset · retrieval, not claim-verification accuracy\n"
+            + (
+                "Dashed guides: empirical percentiles of "
+                + ("pooled query latency" if chart == "latency" else f"displayed method {metric} means")
+                + "; not external targets\n"
+                if guides and chart != "heatmap"
+                else ""
+            )
+            + f"Corpus {run['corpus_sha256'][:16]} · run {run['id'][:12]}",
             color=muted,
             fontsize=8,
         )

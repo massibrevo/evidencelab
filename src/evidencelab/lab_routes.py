@@ -47,18 +47,21 @@ def experiments(request: Request):
 def figure(
     identifier: str,
     request: Request,
-    chart: Literal["scores", "latency", "heatmap", "tradeoff"] = "scores",
+    chart: Literal["scores", "ranking", "latency", "heatmap", "tradeoff"] = "scores",
     metric: Literal["recall", "mrr", "ndcg"] = "recall",
     format: Literal["png", "svg", "pdf"] = "png",
-    theme: Literal["dark", "paper"] = "dark",
-    palette: Literal["spectrum", "ocean", "accessible"] = "spectrum",
+    theme: Literal["dark", "paper"] = "paper",
+    palette: Literal["spectrum", "vivid", "muted", "ocean", "accessible"] = "spectrum",
+    value_labels: bool = True,
+    guides: bool = True,
+    intervals: bool = True,
     download: bool = False,
 ):
     try:
         run = find_benchmark(request.app.state.lab, identifier)
     except ValueError as e:
         raise HTTPException(404, str(e)) from e
-    content = render_benchmark(run, chart, metric, format, theme, palette)
+    content = render_benchmark(run, chart, metric, format, theme, palette, value_labels, guides, intervals)
     mime = {"png": "image/png", "svg": "image/svg+xml", "pdf": "application/pdf"}[format]
     return Response(
         content,

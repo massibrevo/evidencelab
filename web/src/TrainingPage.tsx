@@ -60,7 +60,7 @@ export default function TrainingPage({
                             y: t.history
                               .filter((h) => h.loss !== undefined)
                               .map((h) => h.loss),
-                            line: { color: "#b4e8ab" },
+                            line: { color: "#14b8a6" },
                           },
                           {
                             type: "scatter",
@@ -72,17 +72,17 @@ export default function TrainingPage({
                             y: t.history
                               .filter((h) => h.eval_loss !== undefined)
                               .map((h) => h.eval_loss),
-                            line: { color: "#cdb8e3" },
+                            line: { color: "#9472b0" },
                           },
                         ]}
                         layout={{
                           xaxis: {
                             title: { text: "Optimizer steps" },
-                            gridcolor: "#29332b",
+                            gridcolor: "#e5e7eb",
                           },
                           yaxis: {
                             title: { text: "Cross-entropy loss" },
-                            gridcolor: "#29332b",
+                            gridcolor: "#e5e7eb",
                           },
                         }}
                       />

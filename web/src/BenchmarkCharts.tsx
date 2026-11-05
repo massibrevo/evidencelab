@@ -13,18 +13,45 @@ import { download } from "./types";
 import { Tag } from "./UI";
 const Plot = lazy(() => import("./Plot"));
 export const chartColors = [
-  "#a99bff",
-  "#48d9cb",
-  "#ffbd76",
-  "#f48bb6",
-  "#64b5ff",
+  "#1f77b4",
+  "#ff7f0e",
+  "#87929d",
+  "#456d94",
+  "#d2a05a",
+  "#667481",
 ];
 export const chartPalette = {
   spectrum: chartColors,
-  ocean: ["#5aaeff", "#58d9e2", "#8e91ff", "#b194ff", "#96d2ff"],
+  vivid: ["#12bfb4", "#ff7b58", "#ff9b05", "#8dcf27", "#497fd1"],
+  muted: ["#597dbb", "#d58b5e", "#72b76a", "#c76e70", "#967bb1", "#87684c"],
+  ocean: ["#2166ac", "#1b9eae", "#6488ca", "#7658a4", "#3b84a0"],
   accessible: ["#56B4E9", "#E69F00", "#009E73", "#CC79A7", "#0072B2"],
 };
-type Chart = "scores" | "latency" | "heatmap" | "tradeoff";
+export function percentileGuides(values: number[]) {
+  if (!values.length) return [];
+  const sorted = [...values].sort((a, b) => a - b),
+    grouped = new Map<string, { value: number; labels: string[] }>();
+  for (const [label, q] of [
+    ["P10", 0.1],
+    ["P50", 0.5],
+    ["P90", 0.9],
+  ] as const) {
+    const position = q * (sorted.length - 1),
+      lower = Math.floor(position);
+    const value =
+      sorted[lower] +
+      (sorted[Math.ceil(position)] - sorted[lower]) * (position - lower);
+    const key = value.toFixed(12),
+      existing = grouped.get(key);
+    if (existing) existing.labels.push(label);
+    else grouped.set(key, { value, labels: [label] });
+  }
+  return [...grouped.values()].map((g) => ({
+    value: g.value,
+    label: g.labels.join(" / "),
+  }));
+}
+type Chart = "scores" | "ranking" | "latency" | "heatmap" | "tradeoff";
 export default function BenchmarkCharts({
   run,
   compact = false,
@@ -36,8 +63,10 @@ export default function BenchmarkCharts({
     [metric, setMetric] = useState<"recall" | "mrr" | "ndcg">("recall"),
     [palette, setPalette] = useState<keyof typeof chartPalette>("spectrum"),
     [engine, setEngine] = useState<"interactive" | "matplotlib">("interactive"),
-    [paper, setPaper] = useState(false),
+    [paper, setPaper] = useState(true),
     [errorBars, setErrorBars] = useState(true),
+    [values, setValues] = useState(true),
+    [guides, setGuides] = useState(true),
     [scale, setScale] = useState(false);
   const colors = chartPalette[palette];
   const data = useMemo<Data[]>(() => {
@@ -50,6 +79,12 @@ export default function BenchmarkCharts({
         x: names,
         y: rows.map((r) => r.metrics[key].mean),
         marker: { color: colors[i], line: { width: 0 } },
+        text: values
+          ? rows.map((r) => r.metrics[key].mean.toFixed(3))
+          : undefined,
+        textposition: "outside",
+        textfont: { color: "#253247", size: 11 },
+        cliponaxis: false,
         error_y: {
           type: "data",
           visible: errorBars,
@@ -60,12 +95,46 @@ export default function BenchmarkCharts({
           arrayminus: rows.map((r) =>
             Math.max(0, r.metrics[key].mean - r.metrics[key].low),
           ),
-          color: "#c2cbe0",
+          color: "#627084",
           thickness: 1,
           width: 3,
         },
         hovertemplate: "%{x}<br>%{y:.3f}<extra>%{fullData.name}</extra>",
       }));
+    if (chart === "ranking") {
+      const ranked = [...rows].sort(
+        (a, b) => b.metrics[metric].mean - a.metrics[metric].mean,
+      );
+      return [
+        {
+          type: "bar",
+          x: ranked.map((r) => r.mode.toUpperCase()),
+          y: ranked.map((r) => r.metrics[metric].mean),
+          marker: { color: ranked.map((_, i) => colors[i % colors.length]) },
+          text: values
+            ? ranked.map((r) => r.metrics[metric].mean.toFixed(3))
+            : undefined,
+          textposition: "outside",
+          textfont: { color: "#253247", size: 12 },
+          cliponaxis: false,
+          error_y: {
+            type: "data",
+            visible: errorBars,
+            symmetric: false,
+            color: "#627084",
+            thickness: 1,
+            width: 3,
+            array: ranked.map((r) =>
+              Math.max(0, r.metrics[metric].high - r.metrics[metric].mean),
+            ),
+            arrayminus: ranked.map((r) =>
+              Math.max(0, r.metrics[metric].mean - r.metrics[metric].low),
+            ),
+          },
+          hovertemplate: "%{x}<br>%{y:.3f}<extra></extra>",
+        },
+      ];
+    }
     if (chart === "latency")
       return rows.map((r, i) => ({
         type: "box",
@@ -95,10 +164,8 @@ export default function BenchmarkCharts({
           zmin: 0,
           zmax: 1,
           colorscale: [
-            [0, "#28243f"],
-            [0.25, "#6c4bb1"],
-            [0.6, "#6682c9"],
-            [1, "#54d8c2"],
+            [0, "#f5f6f7"],
+            [1, colors[0]],
           ],
           colorbar: { thickness: 9, len: 0.8, tickfont: { size: 10 } },
           hovertemplate: "%{y}<br>Query %{x}<br>Score %{z:.3f}<extra></extra>",
@@ -116,7 +183,7 @@ export default function BenchmarkCharts({
       marker: {
         color: colors[i % colors.length],
         size: 14,
-        line: { color: "#e5ecff", width: 1 },
+        line: { color: "#ffffff", width: 1 },
       },
       error_y: {
         type: "data",
@@ -132,7 +199,13 @@ export default function BenchmarkCharts({
       hovertemplate:
         "Latency %{x:.2f} ms<br>Score %{y:.3f}<extra>%{fullData.name}</extra>",
     }));
-  }, [run, chart, metric, colors, errorBars]);
+  }, [run, chart, metric, colors, errorBars, values]);
+  const guideValues =
+    chart === "latency"
+      ? run.rows.flatMap((r) => r.queries.map((q) => q.latency_ms))
+      : run.rows.map((r) => r.metrics[metric].mean);
+  const guideLines =
+    guides && chart !== "heatmap" ? percentileGuides(guideValues) : [];
   const layout: Partial<Layout> = {
     barmode: "group",
     bargap: 0.28,
@@ -140,7 +213,7 @@ export default function BenchmarkCharts({
     legend: { orientation: "h", y: 1.18, x: 0, font: { size: 10 } },
     margin: { l: chart === "heatmap" ? 95 : 50, r: 30, t: 45, b: 55 },
     xaxis: {
-      gridcolor: "#29344c",
+      gridcolor: "#e5e7eb",
       zeroline: false,
       title: {
         text:
@@ -150,10 +223,15 @@ export default function BenchmarkCharts({
               ? "Aligned query IDs"
               : "",
       },
-      type: chart === "heatmap" ? "category" : chart === "tradeoff" && scale ? "log" : undefined,
+      type:
+        chart === "heatmap"
+          ? "category"
+          : chart === "tradeoff" && scale
+            ? "log"
+            : undefined,
     },
     yaxis: {
-      gridcolor: "#29344c",
+      gridcolor: "#e5e7eb",
       zeroline: false,
       title: {
         text:
@@ -161,14 +239,45 @@ export default function BenchmarkCharts({
             ? "Per-query latency · ms"
             : chart === "heatmap"
               ? ""
-              : `${metric.toUpperCase()} / score`,
+              : chart === "scores"
+                ? "Mean retrieval score"
+                : `${metric.toUpperCase()}@${run.k}`,
       },
-      range: chart === "scores" || chart === "tradeoff" ? [0, 1.08] : undefined,
+      range:
+        chart === "scores" || chart === "ranking" || chart === "tradeoff"
+          ? [0, 1.18]
+          : undefined,
       type: chart === "latency" && scale ? "log" : undefined,
     },
-    hoverlabel: { bgcolor: "#242d48", font: { color: "#eef2ff" } },
+    hoverlabel: {
+      bgcolor: "#ffffff",
+      bordercolor: "#cbd5e1",
+      font: { color: "#253247" },
+    },
+    shapes: guideLines.map((g) => ({
+      type: "line",
+      xref: "paper",
+      x0: 0,
+      x1: 1,
+      y0: g.value,
+      y1: g.value,
+      line: { color: "#32924b", dash: "dash", width: 1 },
+    })),
+    annotations: guideLines.map((g, i) => ({
+      xref: "paper",
+      yref: "y",
+      x: 1,
+      y: g.value,
+      text: `${g.label} · ${g.value.toFixed(3)}${chart === "latency" ? " ms" : ""}`,
+      showarrow: false,
+      xanchor: "right",
+      yanchor: "bottom",
+      yshift: 3 + i * 12,
+      font: { size: 10, color: "#26723b" },
+      bgcolor: "rgba(255,255,255,0.9)",
+    })),
   };
-  const query = `chart=${chart}&metric=${metric}&theme=${paper ? "paper" : "dark"}&palette=${palette}`;
+  const query = `chart=${chart}&metric=${metric}&theme=${paper ? "paper" : "dark"}&palette=${palette}&value_labels=${values}&guides=${guides}&intervals=${errorBars}`;
   const figureBase = `/api/experiments/${encodeURIComponent(run.id)}/figure?${query}`;
   return (
     <section
@@ -204,6 +313,7 @@ export default function BenchmarkCharts({
           {(
             [
               { id: "scores", label: "Score + CI", icon: BarChart3 },
+              { id: "ranking", label: "Ranked bars", icon: BarChart3 },
               { id: "latency", label: "Latency", icon: TableProperties },
               { id: "heatmap", label: "Failures", icon: Grid2X2 },
               { id: "tradeoff", label: "Trade-offs", icon: ChartScatter },
@@ -234,7 +344,9 @@ export default function BenchmarkCharts({
             value={palette}
             onChange={(e) => setPalette(e.target.value as typeof palette)}
           >
-            <option value="spectrum">Spectrum</option>
+            <option value="spectrum">Jupyter</option>
+            <option value="vivid">Teal + coral</option>
+            <option value="muted">Muted research</option>
             <option value="ocean">Ocean</option>
             <option value="accessible">Accessible</option>
           </select>
@@ -259,16 +371,42 @@ export default function BenchmarkCharts({
       </div>
       <div className="chart-bottom">
         <div className="chart-toggles">
-          {engine === "interactive" ? (
+          {(chart === "scores" ||
+            chart === "ranking" ||
+            chart === "tradeoff") && (
+            <label>
+              <input
+                type="checkbox"
+                checked={errorBars}
+                onChange={(e) => setErrorBars(e.target.checked)}
+              />
+              95% intervals
+            </label>
+          )}
+          {chart !== "heatmap" && (
             <>
               <label>
                 <input
                   type="checkbox"
-                  checked={errorBars}
-                  onChange={(e) => setErrorBars(e.target.checked)}
+                  checked={guides}
+                  onChange={(e) => setGuides(e.target.checked)}
                 />
-                95% intervals
+                Dashed percentiles
               </label>
+              {(chart === "scores" || chart === "ranking") && (
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={values}
+                    onChange={(e) => setValues(e.target.checked)}
+                  />
+                  Value labels
+                </label>
+              )}
+            </>
+          )}
+          {engine === "interactive" ? (
+            <>
               {(chart === "latency" || chart === "tradeoff") && (
                 <label>
                   <input
@@ -313,6 +451,15 @@ export default function BenchmarkCharts({
           </button>
         </div>
       </div>
+      {guideLines.length > 0 && (
+        <div className="guide-caption">
+          Dashed P10 / P50 / P90: empirical percentiles of{" "}
+          {chart === "latency"
+            ? "pooled query latency"
+            : `the ${run.rows.length} displayed method ${metric} means`}
+          . These describe this run; they are not external performance targets.
+        </div>
+      )}
       <div className="chart-provenance">
         <span className="live-dot" />
         {run.query_count} selected dev claims · k={run.k} ·{" "}

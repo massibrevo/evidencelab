@@ -121,8 +121,8 @@ export default function Flow({
     target: node.id,
     animated: false,
     type: "smoothstep",
-    markerEnd: { type: MarkerType.ArrowClosed, color: "#6a8370" },
-    style: { stroke: trace ? "#a8d7a5" : "#53675b", strokeWidth: 1.2 },
+    markerEnd: { type: MarkerType.ArrowClosed, color: "#687c98" },
+    style: { stroke: trace ? "#4c88bc" : "#8d9bb0", strokeWidth: 1.2 },
   }));
   return (
     <div
@@ -140,12 +140,12 @@ export default function Flow({
         fitViewOptions={{ padding: 0.18 }}
         nodesDraggable
         nodesConnectable={false}
-        colorMode="dark"
+        colorMode="light"
         minZoom={0.3}
         maxZoom={1.4}
         attributionPosition="bottom-right"
       >
-        <Background gap={18} color="#313a34" />
+        <Background gap={18} color="#e3e8ee" />
         {kind === "agents" && <Controls showInteractive={false} />}
       </ReactFlow>
     </div>

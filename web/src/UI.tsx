@@ -2,21 +2,23 @@ import { Check, Copy, FlaskConical, Maximize2 } from "lucide-react";
 import { useState } from "react";
 import type { CI, Projection } from "./types";
 export const colors = {
-  retrieval: "#b4e8ab",
-  adaptation: "#cdb8e3",
-  verification: "#dfb97c",
-  coordination: "#88bfd0",
-  biology: "#829fcd",
+  retrieval: "#14b8a6",
+  adaptation: "#9472b0",
+  verification: "#ed9127",
+  coordination: "#2684b7",
+  biology: "#5481c2",
 } as Record<string, string>;
 export const pct = (n: number) => (n * 100).toFixed(1) + "%";
 export function IconButton({
   children,
   label,
   onClick,
+  disabled = false,
 }: {
   children: React.ReactNode;
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -24,6 +26,7 @@ export function IconButton({
       title={label}
       aria-label={label}
       onClick={onClick}
+      disabled={disabled}
     >
       {children}
     </button>

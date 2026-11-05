@@ -152,3 +152,25 @@ def test_figure_cache_preserves_identical_export(tmp_path):
     second = render_benchmark(run, "scores", fmt="svg")
     assert first == second and len(FIGURE_CACHE) == size
     lab.store.close()
+
+
+def test_empirical_guides_are_calculated_and_merge_equal_values():
+    from evidencelab.figures import distribution_guides
+
+    guides = distribution_guides([1, 2, 3, 4])
+    assert [label for label, _ in guides] == ["P10", "P50", "P90"]
+    assert [value for _, value in guides] == pytest.approx([1.3, 2.5, 3.7])
+    assert distribution_guides([2, 2]) == [("P10 / P50 / P90", 2)]
+
+
+def test_ranked_export_describes_guides_and_honours_controls(lab_client):
+    lab, client = lab_client
+    run = benchmark_catalog(lab)[0]
+    endpoint = f"/api/experiments/{run['id']}/figure?chart=ranking&format=svg&palette=muted"
+    result = client.get(endpoint)
+    assert result.status_code == 200
+    assert b"Dashed guides:" in result.content and b"stroke-dasharray" in result.content
+    plain = client.get(endpoint + "&guides=false&value_labels=false&intervals=false")
+    assert plain.status_code == 200
+    assert b"Dashed guides:" not in plain.content
+    assert plain.content != result.content

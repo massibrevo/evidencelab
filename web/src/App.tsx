@@ -115,11 +115,11 @@ const groups = [
   },
 ];
 const colors: Record<string, string> = {
-  retrieval: "#b4e8ab",
-  adaptation: "#cdb8e3",
-  verification: "#dfb97c",
-  coordination: "#88bfd0",
-  biology: "#829fcd",
+  retrieval: "#14b8a6",
+  adaptation: "#9472b0",
+  verification: "#ed9127",
+  coordination: "#2684b7",
+  biology: "#5481c2",
 };
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
@@ -506,7 +506,6 @@ export default function App() {
   );
   return (
     <div
-      data-theme={appearance.theme}
       data-density={appearance.density}
       className={"app " + (mobile ? "menu-open" : "")}
     >
@@ -636,7 +635,7 @@ export default function App() {
                 {
                   {
                     observatory:
-                      "Inspect real experiment quality, runtime signals and agent work in one colourful instrument panel.",
+                      "Inspect real experiment quality, runtime signals and agent work in one research instrument panel.",
                     notebooks:
                       "An integrated Python and Markdown workspace. Read, edit, execute, and export local experiments.",
                     capabilities:
@@ -1161,7 +1160,7 @@ export default function App() {
                                 ? "Principal component 1"
                                 : "UMAP 1",
                           },
-                          gridcolor: "#26312b",
+                          gridcolor: "#e5e7eb",
                           zeroline: false,
                         },
                         yaxis: {
@@ -1171,7 +1170,7 @@ export default function App() {
                                 ? "Principal component 2"
                                 : "UMAP 2",
                           },
-                          gridcolor: "#26312b",
+                          gridcolor: "#e5e7eb",
                           zeroline: false,
                         },
                         legend: { orientation: "h", y: -0.15 },

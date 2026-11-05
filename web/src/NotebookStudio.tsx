@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { notebookHighlight } from "./notebookTheme";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -109,7 +109,8 @@ export default function NotebookStudio() {
     [deleted, setDeleted] = useState<{ cell: Cell; index: number } | null>(
       null,
     ),
-    [rail, setRail] = useState(true);
+    [rail, setRail] = useState(true),
+    [filter, setFilter] = useState("");
   const current = useRef<Document | null>(null),
     isDirty = useRef(false),
     fileRef = useRef<HTMLInputElement>(null);
@@ -411,28 +412,42 @@ export default function NotebookStudio() {
             <span>LAB NOTEBOOKS</span>
             <Tag tone="gray">{catalog?.notebooks.length ?? 0}</Tag>
           </div>
-          {catalog?.notebooks.map((n) => (
-            <button
-              className={doc?.id === n.id ? "selected" : ""}
-              key={n.id}
-              disabled={!!busy}
-              onClick={() => load(n.id)}
-            >
-              <span className="notebook-file-icon">
-                <BookOpen size={15} />
-              </span>
-              <div>
-                <strong>{n.title}</strong>
-                <small>
-                  {n.cells} cells ·{" "}
-                  {n.origin === "bundled"
-                    ? "Learning template"
-                    : "Saved workspace"}
-                </small>
-              </div>
-              {doc?.id === n.id && <span className="live-dot" />}
-            </button>
-          ))}
+          <input
+            className="notebook-filter"
+            aria-label="Filter notebooks"
+            placeholder="Filter notebooks by name…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          {catalog?.notebooks
+            .filter((n) => n.title.toLowerCase().includes(filter.toLowerCase()))
+            .map((n) => (
+              <button
+                className={doc?.id === n.id ? "selected" : ""}
+                key={n.id}
+                disabled={!!busy}
+                onClick={() => load(n.id)}
+              >
+                <span className="notebook-file-icon">
+                  <BookOpen size={15} />
+                </span>
+                <div>
+                  <strong>{n.title}</strong>
+                  <small>
+                    {n.cells} cells ·{" "}
+                    {n.origin === "bundled"
+                      ? "Learning template"
+                      : "Saved workspace"}
+                  </small>
+                </div>
+                {doc?.id === n.id && <span className="live-dot" />}
+              </button>
+            ))}
+          {catalog &&
+            filter &&
+            !catalog.notebooks.some((n) =>
+              n.title.toLowerCase().includes(filter.toLowerCase()),
+            ) && <p className="notebook-empty">No matching notebooks.</p>}
           <div className="notebook-rail-foot">
             <Code2 size={17} />
             <p>
@@ -461,6 +476,14 @@ export default function NotebookStudio() {
           }}
           className={"notebook-editor " + (busy ? "is-running" : "")}
         >
+          <div className="notebook-document-tab">
+            <BookOpen size={15} />
+            <span>{doc?.title ?? "Notebook"}.ipynb</span>
+            <span
+              className={dirty ? "tab-unsaved" : "tab-saved"}
+              title={dirty ? "Unsaved changes" : "Saved"}
+            />
+          </div>
           <div className="notebook-toolbar">
             <IconButton
               label={rail ? "Hide notebook list" : "Show notebook list"}
@@ -502,6 +525,44 @@ export default function NotebookStudio() {
               </span>
             </div>
             <div className="notebook-actions">
+              <IconButton
+                label="Insert code cell after selection"
+                disabled={!doc || !!busy}
+                onClick={() => add("code", active ?? undefined)}
+              >
+                <Plus size={16} />
+              </IconButton>
+              <select
+                aria-label="Selected cell type"
+                value={
+                  doc?.notebook.cells.find((c) => c.id === active)?.cell_type ??
+                  "code"
+                }
+                disabled={!doc || !!busy || !active}
+                onChange={(e) => {
+                  if (!doc) return;
+                  const type = e.target.value as Cell["cell_type"];
+                  modify(
+                    doc.notebook.cells.map((c) =>
+                      c.id === active
+                        ? {
+                            id: c.id,
+                            source: c.source,
+                            cell_type: type,
+                            metadata: {},
+                            ...(type === "code"
+                              ? { outputs: [], execution_count: null }
+                              : {}),
+                          }
+                        : c,
+                    ),
+                  );
+                  setEditingMarkdown(null);
+                }}
+              >
+                <option value="code">Code</option>
+                <option value="markdown">Markdown</option>
+              </select>
               <button
                 className="secondary"
                 disabled={!doc || !!busy || !dirty}
@@ -520,6 +581,7 @@ export default function NotebookStudio() {
               </IconButton>
               <IconButton
                 label="Duplicate notebook"
+                disabled={!doc || !!busy}
                 onClick={() => {
                   if (doc) void create(doc.id);
                 }}
@@ -628,6 +690,9 @@ export default function NotebookStudio() {
                 key={cell.id}
                 className={
                   "notebook-cell " +
+                  (cell.cell_type === "markdown"
+                    ? "markdown-cell "
+                    : "code-cell ") +
                   (active === cell.id ? "active" : "") +
                   " " +
                   (busy === cell.id ? "executing" : "")
@@ -733,8 +798,12 @@ export default function NotebookStudio() {
                   {cell.cell_type === "code" || editingMarkdown === cell.id ? (
                     <CodeMirror
                       value={plain(cell.source)}
-                      extensions={cell.cell_type === "code" ? [python()] : []}
-                      theme={oneDark}
+                      extensions={
+                        cell.cell_type === "code"
+                          ? [python(), notebookHighlight]
+                          : []
+                      }
+                      theme="light"
                       editable={!busy}
                       minHeight="65px"
                       basicSetup={{

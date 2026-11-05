@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import BenchmarkCharts from "./BenchmarkCharts";
+import BenchmarkCharts, { percentileGuides } from "./BenchmarkCharts";
 import ModelCharts from "./ModelCharts";
 import type { Benchmark } from "./types";
 vi.mock("./Plot", () => ({ default: () => <div>Recorded plot</div> }));
@@ -32,6 +32,14 @@ const run = {
   ],
 } as unknown as Benchmark;
 describe("Research chart controls", () => {
+  it("uses interpolated empirical percentiles and collapses tied guides", () => {
+    expect(percentileGuides([4, 1, 3, 2]).map((g) => g.value)).toEqual([
+      1.3, 2.5, 3.7,
+    ]);
+    expect(percentileGuides([2, 2])).toEqual([
+      { value: 2, label: "P10 / P50 / P90" },
+    ]);
+  });
   it("labels reference data and exports the selected view", () => {
     render(<BenchmarkCharts run={run} />);
     expect(screen.getByText("PUBLISHED REFERENCE")).toBeInTheDocument();

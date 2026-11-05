@@ -222,10 +222,10 @@ export default function Observatory({
                     name: "Process RSS (MB)",
                     x: samples.map((s) => s.timestamp),
                     y: samples.map((s) => s.rss_mb),
-                    line: { color: "#a99bff", width: 2 },
+                    line: { color: "#1f77b4", width: 2 },
                     marker: { size: 4 },
                     fill: "tozeroy",
-                    fillcolor: "#a99bff15",
+                    fillcolor: "#1f77b415",
                   },
                   {
                     type: "scatter",
@@ -234,16 +234,16 @@ export default function Observatory({
                     x: samples.map((s) => s.timestamp),
                     y: samples.map((s) => s.system_memory_percent),
                     yaxis: "y2",
-                    line: { color: "#48d9cb", width: 2 },
+                    line: { color: "#ff7f0e", width: 2 },
                   },
                 ]}
                 layout={{
                   margin: { l: 50, r: 45, t: 35, b: 45 },
                   legend: { orientation: "h", y: 1.2, font: { size: 9 } },
-                  xaxis: { type: "date", gridcolor: "#29344c" },
+                  xaxis: { type: "date", gridcolor: "#e5e7eb" },
                   yaxis: {
                     title: { text: "RSS · MB" },
-                    gridcolor: "#29344c",
+                    gridcolor: "#e5e7eb",
                     rangemode: "tozero",
                   },
                   yaxis2: {
@@ -301,7 +301,7 @@ export default function Observatory({
                     margin: { l: 90, r: 25, t: 20, b: 45 },
                     xaxis: {
                       title: { text: "Total recorded node time · ms" },
-                      gridcolor: "#29344c",
+                      gridcolor: "#e5e7eb",
                     },
                     yaxis: { autorange: "reversed", showgrid: false },
                   }}

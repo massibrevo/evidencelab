@@ -43,7 +43,7 @@ pip install -e '.[notebooks]'
 
 The **Notebook studio** edits and executes real `.ipynb` cells, renders Markdown/LaTeX, captures Matplotlib images, preserves kernel variables, and saves workspace copies. It includes import/export, cell manipulation, timeouts, interrupts, and revision conflict detection. Kernels are trusted local Python processes, not a sandbox; imported notebooks never run automatically.
 
-The **Observatory** adds score/CI bars, latency distributions, query heatmaps, quality/latency trade-offs, real agent timing and live memory signals. Switch Plotly/Matplotlib and export PNG/SVG/PDF/CSV/JSON. Published reference data are labelled separately from local runs. New benchmark controls cover retrieval strategies, query rewriting, resamples, and agent architecture.
+The **Observatory** adds score/CI bars, latency distributions, query heatmaps, quality/latency trade-offs, ranked bars, numeric labels, empirical percentile guides, real agent timing and live memory signals. Switch Plotly/Matplotlib and export PNG/SVG/PDF/CSV/JSON. Published reference data are labelled separately from local runs. New benchmark controls cover retrieval strategies, query rewriting, resamples, and agent architecture.
 
 Read the [notebook guide](docs/notebook-studio.md) and [observatory guide](docs/observatory.md). `04_experiment_observatory.ipynb` explains the plotting workflow. All charts use measured data or explicitly labelled teaching examples.
 
@@ -77,7 +77,7 @@ Use `--adapter PATH` for adapted-model comparisons, `--revision COMMIT_SHA` for 
 
 ## Control center
 
-A colourful ink-blue research workspace with four themes, density controls, integrated Python notebooks, scientific chart exports, evidence drawers, configurable pipelines, vector/concept explorers, training curves and measured leaderboards. Charts display actual corpus projections and recorded runs. Training charts remain empty until real artifacts exist.
+A minimalist white research workspace inspired by Jupyter, with neutral grey surfaces, blue actions, orange notebook accents, density controls, integrated Python notebooks, scientific chart exports, evidence drawers, configurable pipelines, vector/concept explorers, training curves and measured leaderboards. Charts display actual corpus projections and recorded runs. Training charts remain empty until real artifacts exist.
 
 ![EvidenceLab control center](docs/images/control-center.jpg)
 

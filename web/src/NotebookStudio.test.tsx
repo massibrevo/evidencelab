@@ -102,6 +102,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("Integrated notebook workspace", () => {
+  it("converts a selected cell while preserving valid notebook structure without execution", async () => {
+    render(<NotebookStudio />);
+    await screen.findByLabelText("Selected cell type");
+    await screen.findByLabelText("Python cell editor");
+    fireEvent.change(screen.getByLabelText("Selected cell type"), {
+      target: { value: "code" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await screen.findByText("Notebook saved locally.");
+    expect(
+      requests.find((r) => r.method === "PUT")?.body?.notebook,
+    ).toMatchObject({
+      cells: expect.arrayContaining([
+        expect.objectContaining({
+          id: "md",
+          cell_type: "code",
+          outputs: [],
+          execution_count: null,
+        }),
+      ]),
+    });
+    expect(requests.some((r) => r.url.endsWith("/run"))).toBe(false);
+    fireEvent.change(screen.getByLabelText("Filter notebooks"), {
+      target: { value: "missing notebook" },
+    });
+    expect(screen.getByText("No matching notebooks.")).toBeInTheDocument();
+  });
   it("edits and saves a notebook without executing it", async () => {
     render(<NotebookStudio />);
     const editor = await screen.findByLabelText("Python cell editor");
