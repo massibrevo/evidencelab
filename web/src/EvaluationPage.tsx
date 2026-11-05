@@ -1,3 +1,6 @@
+import BenchmarkCharts from "./BenchmarkCharts";
+import BenchmarkControls from "./BenchmarkControls";
+import type { BenchmarkOptions } from "./types";
 import { ArrowDownToLine, FlaskConical, Play, ShieldCheck } from "lucide-react";
 import { lazy } from "react";
 
@@ -7,6 +10,8 @@ import { download, modes } from "./types";
 const Plot = lazy(() => import("./Plot"));
 export default function EvaluationPage({
   overview,
+  options,
+  onOptionsChange,
   k,
   setK,
   seed,
@@ -19,6 +24,8 @@ export default function EvaluationPage({
   setSelectedBench,
 }: {
   overview: Overview | null;
+  options: BenchmarkOptions;
+  onOptionsChange: (value: BenchmarkOptions) => void;
   k: number;
   setK: (value: number) => void;
   seed: number;
@@ -32,6 +39,12 @@ export default function EvaluationPage({
 }) {
   return (
     <>
+      <BenchmarkControls
+        value={options}
+        onChange={onOptionsChange}
+        dense={!!overview?.dense}
+        busy={!!busy}
+      />
       <div className="evaluation-controls">
         <div>
           <Tag>RETRIEVAL BENCHMARK</Tag>
@@ -60,6 +73,7 @@ export default function EvaluationPage({
           />
         </label>
       </div>
+      {currentBench && <BenchmarkCharts run={currentBench} />}
       <section className="panel">
         <div className="panel-title">
           <h2>
@@ -147,7 +161,10 @@ export default function EvaluationPage({
             <div className="table-footer">
               Measured locally · {currentBench.query_count} queries · seed{" "}
               {currentBench.seed}
-              <span>Percentile bootstrap · 2,000 resamples</span>
+              <span>
+                Percentile bootstrap · {currentBench.resamples ?? 2000}{" "}
+                resamples
+              </span>
             </div>
           </>
         ) : (

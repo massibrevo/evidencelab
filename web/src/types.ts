@@ -90,6 +90,25 @@ export type Benchmark = {
   corpus_sha256: string;
   paired: { baseline: string; candidate: string; delta_recall: CI }[];
   limitations: string;
+  queries_sha256?: string;
+  provenance?: "local" | "reference";
+  label?: string;
+  architecture?: string | null;
+  resamples?: number;
+  configs?: {
+    mode: string;
+    k: number;
+    rewrite: boolean;
+    rerank: boolean;
+    representation: string;
+  }[];
+};
+export type BenchmarkOptions = {
+  modes: Mode[];
+  rewrite: boolean;
+  rerank: boolean;
+  resamples: number;
+  architecture: string | null;
 };
 export type Overview = {
   papers: number;
@@ -126,13 +145,17 @@ export const modes: { id: Mode; name: string; detail: string }[] = [
   { id: "graph", name: "Graph expansion", detail: "Concept co-occurrence" },
   { id: "dense", name: "Dense", detail: "SentenceTransformer + Qdrant" },
 ];
-export async function api<T>(path: string, body?: unknown): Promise<T> {
+export async function api<T>(
+  path: string,
+  body?: unknown,
+  method = "POST",
+): Promise<T> {
   const response = await fetch(
     "/api" + path,
     body === undefined
       ? undefined
       : {
-          method: "POST",
+          method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         },
@@ -162,3 +185,38 @@ export function download(value: unknown, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export type ResourceSample = {
+  timestamp: string;
+  rss_mb: number;
+  system_memory_percent: number;
+  available_memory_gb: number;
+  process_cpu_seconds: number;
+  threads: number;
+  uptime_seconds: number;
+  logical_cpus: number;
+};
+export type Analytics = {
+  counts: Record<string, number>;
+  window_size: number;
+  window_limit: number;
+  papers: number;
+  chunks: number;
+  answered: number;
+  abstained: number;
+  cited_answers: number;
+  generated_tokens: number | null;
+  latency: { median: number; p95: number } | null;
+  architectures: Record<string, number>;
+  nodes: { node: string; calls: number; mean_ms: number; total_ms: number }[];
+  activity: {
+    id: string;
+    created: string;
+    kind: string;
+    label: string;
+    latency_ms: number | null;
+    architecture: string | null;
+  }[];
+  resources: ResourceSample;
+  limitations: string;
+};

@@ -21,18 +21,24 @@ def create_app(lab: Lab | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app):
         app.state.lab = lab or Lab()
+        from .notebooks import NotebookWorkspace
+
+        app.state.notebooks = NotebookWorkspace(
+            app.state.lab.home, os.environ.get("EVIDENCELAB_NOTEBOOK_EXECUTION") == "1"
+        )
         yield
+        app.state.notebooks.close()
         if lab is None:
             app.state.lab.store.close()
 
-    app = FastAPI(title="EvidenceLab", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="EvidenceLab", version="0.2.0", lifespan=lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[
             f"http://{host}:{os.environ.get('EVIDENCELAB_WEB_PORT', '5173')}"
             for host in ("localhost", "127.0.0.1")
         ],
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "PUT"],
         allow_headers=["Content-Type"],
     )
 
@@ -78,7 +84,7 @@ def create_app(lab: Lab | None = None) -> FastAPI:
         return {
             "papers": len(instance.store.papers()),
             "chunks": len(instance.index.chunks),
-            "runs": len(instance.store.runs()),
+            "runs": sum(instance.store.run_counts().values()),
             "engine": instance.generator.name,
             "dense": instance.index.dense_backend is not None,
             "hardware": hardware(),
@@ -148,7 +154,31 @@ def create_app(lab: Lab | None = None) -> FastAPI:
 
     @app.post("/api/benchmarks")
     def benchmark(body: BenchmarkRequest, request: Request):
-        return get(request).benchmark(body.modes, body.k, body.seed)
+        instance = get(request)
+        runner = None
+        if body.architecture:
+
+            def runner(question, mode):
+                return instance.agents.investigate(
+                    question,
+                    body.architecture,
+                    mode,
+                    body.k,
+                    thread_id="benchmark",
+                    rewrite=body.rewrite,
+                    rerank=body.rerank,
+                )
+
+        return instance.benchmark(
+            body.modes,
+            body.k,
+            body.seed,
+            rewrite=body.rewrite,
+            rerank=body.rerank,
+            resamples=body.resamples,
+            runner=runner,
+            architecture_label=body.architecture,
+        )
 
     @app.get("/api/runs")
     def runs(request: Request, kind: Literal["query", "benchmark", "investigation"] | None = None):
@@ -183,6 +213,10 @@ def create_app(lab: Lab | None = None) -> FastAPI:
             except (OSError, json.JSONDecodeError):
                 continue
         return {"suites": SUITES, "runs": result}
+
+    from .lab_routes import router
+
+    app.include_router(router)
 
     dist = ROOT / "web/dist"
     if dist.exists():

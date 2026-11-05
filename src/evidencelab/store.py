@@ -47,5 +47,9 @@ class Store:
             ).fetchall()
             return [json.loads(r[0]) for r in rows]
 
+    def run_counts(self) -> dict[str, int]:
+        with self.lock:
+            return dict(self.db.execute("SELECT kind, COUNT(*) FROM runs GROUP BY kind").fetchall())
+
     def close(self) -> None:
         self.db.close()

@@ -47,6 +47,10 @@ class BenchmarkRequest(BaseModel):
     )
     k: int = Field(default=3, ge=1, le=20)
     seed: int = 42
+    rewrite: bool = False
+    rerank: bool = False
+    resamples: int = Field(default=2000, ge=200, le=10000)
+    architecture: Literal["single", "supervisor", "hierarchical", "swarm"] | None = None
 
 
 class ArxivRequest(BaseModel):

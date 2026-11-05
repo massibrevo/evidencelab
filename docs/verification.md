@@ -4,18 +4,20 @@ This is an engineering verification report, not a model-quality benchmark. Execu
 
 | Check | Observed result |
 |---|---|
-| Core Python tests | 31 passed; optional neural architecture test skipped by default |
+| Core Python tests | 41 passed; two explicit optional integrations skipped by default |
 | Explicit native Qwen compatibility test | Passed on a randomly initialized miniature Qwen3.5 configuration; full multimodal-to-text checkpoint load, no missing text weights, forward pass, generation, one adapter optimization step, adapter save/reload and equal logits |
 | Embedded Qdrant integration | Passed with actual local Qdrant and deterministic test vectors; no neural quality claim |
-| Dashboard interaction tests | 4 passed; research request, source drawer, honest empty states, filtering, broad-task navigation, command palette |
-| TypeScript + production build | Passed |
+| Dashboard interaction tests | 11 passed; original workflows plus notebook editing/execution controls, chart options, model protocol filtering, theme persistence |
+| TypeScript + production build | Passed; Plotly remains a separately loaded ~507 kB gzip chart bundle |
+| Explicit notebook kernel integration | Passed; persistent variables, real Matplotlib PNG output, saved revisions and kernel cleanup |
+| Scientific figure exports | PNG, SVG, PDF and CSV verified from actual reference/run records; exported PNG visually inspected |
 | Python static checks | Ruff passed |
-| Educational notebooks | All 3 executed successfully, no downloads/training |
+| Educational notebooks | All 4 executed successfully, including reference Matplotlib charts and SVG export; no downloads/training |
 | Dataset preparation | Verified full SciFact upstream train conversion: 394 train / 52 validation / 59 test examples, paper-connected groups, disjoint partitions, hashed outputs |
 | SFT configuration | Dry run validated hashes and split integrity; full checkpoint training not executed |
 | Real CPU retrieval experiment | Executed 4 methods over 24 selected dev claims; raw per-query artifact committed |
-| Wheel/source distribution | Both built; wheel inspected to confirm all three offline demo resources are packaged |
-| Browser end-to-end | Real API query → citations → exact highlighted source; real retrieval benchmark → CIs; dynamic LangGraph execution → seven-node trace; Plotly corpus projection; broad benchmark recipe panel |
+| Wheel/source distribution | 0.2.0 wheel and source distribution built; wheel inspected for offline demo data, four notebooks and reference experiment |
+| Browser end-to-end | Real API query → citations → exact highlighted source; real retrieval benchmark → CIs; dynamic LangGraph execution → seven-node trace; Plotly corpus projection; broad benchmark recipe panel; integrated notebook Run all with real stdout, PNG plots, saved outputs; Plotly/Matplotlib observatory and actual PDF download |
 | Responsive layout | Desktop breakpoint and 390 px phone breakpoint inspected; phone document width equals viewport width; mobile navigation exercised |
 | Browser console | No error/warning records during final inspected workflow |
 | Docker | Configuration supplied; image not executed because the local Docker daemon is unavailable |
@@ -28,6 +30,7 @@ source .venv/bin/activate
 pytest -q
 ruff check src tests scripts
 python scripts/execute_notebooks.py
+EVIDENCELAB_TEST_NOTEBOOKS=1 pytest tests/optional/test_notebook_kernel.py -q
 npm --prefix web ci
 npm --prefix web test
 npm --prefix web run build

@@ -4,7 +4,7 @@
 
 A local-first research workstation for paper ingestion, cited research answers, retrieval experiments, agent orchestration, and reproducible evaluation. Includes an offline SciFact demo, a FastAPI service, a React control center, mathematical notebooks, and optional Qwen3.5 / PEFT / TRL workflows. No paid APIs or mandatory API keys.
 
-> Research software, v0.1.0. The default answer engine extracts source sentences; it is not an LLM. Neural models and training require optional dependencies and downloads. No model quality or training results are invented. [Verification report](docs/verification.md).
+> Research software, v0.2.0. The default answer engine extracts source sentences; it is not an LLM. Neural models and training require optional dependencies and downloads. No model quality or training results are invented. [Verification report](docs/verification.md).
 
 ## Quick start · Python 3.12–3.14, Node 22+
 
@@ -31,6 +31,21 @@ The wheel includes offline demo data; the dashboard and development scripts run 
 For a locked installation, use `uv sync --locked --extra dev` and `source .venv/bin/activate`. The Python lock includes optional extras; only requested extras are installed. The dashboard uses `npm ci` with its committed lockfile.
 
 If default ports are busy: `EVIDENCELAB_WEB_PORT=5199 EVIDENCELAB_API_PORT=8199 ./scripts/dev.sh`.
+
+## Notebook studio and experiment observatory
+
+```bash
+# Editing and chart exports are included in the base installation.
+# Enable explicit local Python-cell execution:
+pip install -e '.[notebooks]'
+./scripts/dev.sh --notebooks
+```
+
+The **Notebook studio** edits and executes real `.ipynb` cells, renders Markdown/LaTeX, captures Matplotlib images, preserves kernel variables, and saves workspace copies. It includes import/export, cell manipulation, timeouts, interrupts, and revision conflict detection. Kernels are trusted local Python processes, not a sandbox; imported notebooks never run automatically.
+
+The **Observatory** adds score/CI bars, latency distributions, query heatmaps, quality/latency trade-offs, real agent timing and live memory signals. Switch Plotly/Matplotlib and export PNG/SVG/PDF/CSV/JSON. Published reference data are labelled separately from local runs. New benchmark controls cover retrieval strategies, query rewriting, resamples, and agent architecture.
+
+Read the [notebook guide](docs/notebook-studio.md) and [observatory guide](docs/observatory.md). `04_experiment_observatory.ipynb` explains the plotting workflow. All charts use measured data or explicitly labelled teaching examples.
 
 ## Broad model capabilities
 
@@ -62,7 +77,7 @@ Use `--adapter PATH` for adapted-model comparisons, `--revision COMMIT_SHA` for 
 
 ## Control center
 
-A warm graphite workspace with instrument-style graphs, evidence drawers, configurable pipelines, a vector explorer, model cards, training artifact plots, and measured leaderboard entries. Charts display actual corpus projections and recorded runs. Training charts remain empty until real artifacts exist.
+A colourful ink-blue research workspace with four themes, density controls, integrated Python notebooks, scientific chart exports, evidence drawers, configurable pipelines, vector/concept explorers, training curves and measured leaderboards. Charts display actual corpus projections and recorded runs. Training charts remain empty until real artifacts exist.
 
 ![EvidenceLab control center](docs/images/control-center.jpg)
 
@@ -72,6 +87,8 @@ A warm graphite workspace with instrument-style graphs, evidence drawers, config
 ![Agent execution trace](docs/images/agent-studio.jpg)
 ![Vector explorer](docs/images/vector-explorer.jpg)
 ![Broad model benchmarks](docs/images/model-benchmarks.jpg)
+![Experiment observatory](docs/images/observatory.jpg)
+![Integrated notebook studio](docs/images/notebook-studio.jpg)
 
 </details>
 
@@ -127,7 +144,7 @@ Read [experimental methodology](docs/methodology.md), [research references](docs
 
 ## Learning notebooks
 
-`notebooks/01_retrieval.ipynb`: BM25, TF-IDF, RRF and rank metrics. `02_adaptation.ipynb`: LoRA parameter counts, NF4 intuition, DPO and GRPO equations. `03_experimental_design.ipynb`: paired bootstrap, ablation pitfalls and sample sizes. No notebook downloads a model or starts training.
+`notebooks/01_retrieval.ipynb`: BM25, TF-IDF, RRF and rank metrics. `02_adaptation.ipynb`: LoRA parameter counts, NF4 intuition, DPO and GRPO equations. `03_experimental_design.ipynb`: paired bootstrap, ablation pitfalls and sample sizes. `04_experiment_observatory.ipynb`: Matplotlib figures and exports from the measured reference. No notebook downloads a model or starts training.
 
 ## Development and deployment
 

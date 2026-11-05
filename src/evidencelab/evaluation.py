@@ -79,7 +79,10 @@ def evaluate(
     generator=None,
     rewrite: bool = False,
     rerank: bool = False,
+    resamples: int = 2000,
 ) -> dict:
+    if not 200 <= resamples <= 10000:
+        raise ValueError("Choose 200–10,000 bootstrap resamples")
     if not queries or len({q["id"] for q in queries}) != len(queries):
         raise ValueError("Need nonempty, uniquely identified evaluation queries")
     created = datetime.now(UTC).isoformat()
@@ -118,7 +121,10 @@ def evaluate(
                     "generated_tokens": answer.get("generated_tokens"),
                 }
             )
-        summary = {m: bootstrap([r["metrics"][m] for r in records], seed) for m in ("recall", "mrr", "ndcg")}
+        summary = {
+            m: bootstrap([r["metrics"][m] for r in records], seed, resamples)
+            for m in ("recall", "mrr", "ndcg")
+        }
         latency = [r["latency_ms"] for r in records]
         rows.append(
             {
@@ -150,6 +156,7 @@ def evaluate(
                             for a, b in zip(rows[0]["queries"], other["queries"])
                         ],
                         seed,
+                        resamples,
                     ),
                 }
             )
@@ -161,6 +168,7 @@ def evaluate(
         "query_count": len(queries),
         "k": k,
         "seed": seed,
+        "resamples": resamples,
         "corpus_sha256": corpus_hash,
         "queries_sha256": hashlib.sha256(json.dumps(queries, sort_keys=True).encode()).hexdigest(),
         "environment": {

@@ -10,6 +10,8 @@ from pathlib import Path
 
 def main():
     root = Path(__file__).resolve().parents[1]
+    if "--notebooks" in sys.argv:
+        os.environ["EVIDENCELAB_NOTEBOOK_EXECUTION"] = "1"
     api_port = os.environ.get("EVIDENCELAB_API_PORT", "8000")
     web_port = os.environ.get("EVIDENCELAB_WEB_PORT", "5173")
     children = []

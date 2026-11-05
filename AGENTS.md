@@ -11,3 +11,5 @@
 - Prefer accessible native controls, local assets and honest labels. Configured graphs are labeled as templates; executed traces come from real runs.
 - Preserve local-first defaults, bound file inputs, reject arbitrary fetch URLs, avoid remote code, and never expose credentials in artifacts.
 - Keep implementation status and research limitations current. New model families need an explicit adapter and compatibility evidence.
+
+- Notebook execution is a trusted-local opt-in (`scripts/dev.sh --notebooks`). Never execute imported cells automatically. Keep revision conflicts, output limits, timeouts, and kernel cleanup intact. Use `EVIDENCELAB_TEST_NOTEBOOKS=1 pytest tests/optional/test_notebook_kernel.py` only for an explicitly requested local-kernel check.

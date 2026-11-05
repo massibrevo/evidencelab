@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Data, Layout } from "plotly.js";
-import Plotly from "plotly.js-basic-dist-min";
+import Plotly from "plotly.js-cartesian-dist-min";
 export default function Plot({
   data,
   layout = {},
@@ -19,16 +19,25 @@ export default function Plot({
       {
         paper_bgcolor: "transparent",
         plot_bgcolor: "transparent",
-        font: { family: "monospace", color: "#8c9690", size: 10 },
+        font: { family: "monospace", color: "#9baac8", size: 11 },
         margin: { l: 45, r: 20, t: 20, b: 40 },
-        xaxis: { gridcolor: "#242c27", zeroline: false },
-        yaxis: { gridcolor: "#242c27", zeroline: false },
+        xaxis: { gridcolor: "#2b3550", zeroline: false },
+        yaxis: { gridcolor: "#2b3550", zeroline: false },
         ...layout,
       },
       {
         responsive: true,
+        toImageButtonOptions: {
+          format: "png",
+          filename: "evidencelab-chart",
+          scale: 2,
+        },
         displaylogo: false,
-        modeBarButtonsToRemove: ["lasso2d", "select2d"],
+        modeBarButtons: [
+          ["toImage"],
+          ["zoom2d", "pan2d"],
+          ["zoomIn2d", "zoomOut2d", "autoScale2d", "resetScale2d"],
+        ],
       },
     );
     if (onClick)

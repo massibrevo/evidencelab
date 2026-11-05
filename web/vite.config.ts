@@ -17,7 +17,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           flow: ["@xyflow/react"],
-          plotly: ["plotly.js-basic-dist-min"],
+          plotly: ["plotly.js-cartesian-dist-min"],
         },
       },
     },

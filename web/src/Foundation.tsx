@@ -1,3 +1,4 @@
+import ModelCharts from "./ModelCharts";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -126,6 +127,7 @@ export default function Foundation() {
           );
         })}
       </div>
+      <ModelCharts runs={runs} />
       <div className="two-column">
         <section>
           <section className="panel">

@@ -35,6 +35,7 @@ const paper = {
 let calls: { path: string; body: unknown }[] = [];
 beforeEach(() => {
   calls = [];
+  localStorage.clear();
   vi.stubGlobal(
     "fetch",
     vi.fn(async (url: string, options?: RequestInit) => {
@@ -158,6 +159,23 @@ describe("Research workstation", () => {
       expect(
         screen.queryByRole("dialog", { name: "Search workspace" }),
       ).not.toBeInTheDocument(),
+    );
+  });
+  it("persists the chosen colour theme and layout density", async () => {
+    render(<App />);
+    await screen.findByText("Local system online");
+    fireEvent.click(screen.getByRole("button", { name: "Ocean colour theme" }));
+    expect(document.querySelector(".app")).toHaveAttribute(
+      "data-theme",
+      "ocean",
+    );
+    expect(
+      JSON.parse(localStorage.getItem("evidencelab.appearance") ?? "{}").theme,
+    ).toBe("ocean");
+    fireEvent.click(screen.getByRole("button", { name: "Use compact layout" }));
+    expect(document.querySelector(".app")).toHaveAttribute(
+      "data-density",
+      "compact",
     );
   });
 });

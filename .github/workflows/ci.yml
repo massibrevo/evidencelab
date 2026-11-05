@@ -18,6 +18,7 @@ jobs:
       - run: uv run ruff check src tests scripts
       - run: uv run python scripts/benchmark_models.py --suite smoke
       - run: uv run python scripts/execute_notebooks.py
+      - run: EVIDENCELAB_TEST_NOTEBOOKS=1 uv run pytest tests/optional/test_notebook_kernel.py -q
   dashboard:
     runs-on: ubuntu-latest
     defaults:

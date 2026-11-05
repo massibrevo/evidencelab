@@ -1,3 +1,8 @@
+import AppearanceControls, { readAppearance } from "./Appearance";
+import type { Appearance } from "./Appearance";
+
+import { NotebookPen, ChartNoAxesCombined } from "lucide-react";
+import type { BenchmarkOptions } from "./types";
 import {
   Activity,
   ArrowDown,
@@ -58,7 +63,12 @@ import type {
 import { api, download, modes } from "./types";
 import { Code, Empty, IconButton, MiniSpace, Tag } from "./UI";
 const Plot = lazy(() => import("./Plot"));
+const Observatory = lazy(() => import("./Observatory"));
+const NotebookStudio = lazy(() => import("./NotebookStudio"));
+const ConceptGraph = lazy(() => import("./ConceptGraph"));
 type Page =
+  | "observatory"
+  | "notebooks"
   | "capabilities"
   | "workspace"
   | "papers"
@@ -69,6 +79,8 @@ type Page =
   | "evaluation"
   | "models";
 const titles: Record<Page, string> = {
+  observatory: "Experiment observatory",
+  notebooks: "Notebook studio",
   capabilities: "Model benchmarks",
   workspace: "Research workspace",
   papers: "Paper library",
@@ -87,11 +99,13 @@ const groups = [
       ["papers", BookOpen, "Paper library"],
       ["pipeline", GitBranch, "RAG pipeline"],
       ["vectors", Boxes, "Vector explorer"],
+      ["notebooks", NotebookPen, "Notebook studio"],
     ],
   },
   {
     label: "EXPERIMENTS",
     items: [
+      ["observatory", ChartNoAxesCombined, "Observatory"],
       ["models", Cpu, "Foundation models"],
       ["agents", Network, "Agent studio"],
       ["training", SlidersHorizontal, "Fine-tuning"],
@@ -140,6 +154,22 @@ export default function App() {
     [mobile, setMobile] = useState(false),
     [activeTab, setActiveTab] = useState("Answer"),
     [seed, setSeed] = useState(42);
+  const [appearance, setAppearance] = useState<Appearance>(readAppearance);
+  const [benchmarkOptions, setBenchmarkOptions] = useState<BenchmarkOptions>({
+    modes: ["bm25", "tfidf", "hybrid", "graph"],
+    rewrite: false,
+    rerank: false,
+    resamples: 2000,
+    architecture: null,
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "evidencelab.appearance",
+        JSON.stringify(appearance),
+      );
+    } catch {}
+  }, [appearance]);
   const [sourceRange, setSourceRange] = useState<{
     start: number;
     end: number;
@@ -263,7 +293,7 @@ export default function App() {
     setError("");
     try {
       const b = await api<Benchmark>("/benchmarks", {
-        modes: ["bm25", "tfidf", "hybrid", "graph"],
+        ...benchmarkOptions,
         k,
         seed,
       });
@@ -475,7 +505,11 @@ export default function App() {
     </div>
   );
   return (
-    <div className={"app " + (mobile ? "menu-open" : "")}>
+    <div
+      data-theme={appearance.theme}
+      data-density={appearance.density}
+      className={"app " + (mobile ? "menu-open" : "")}
+    >
       <aside className="sidebar">
         <button className="brand" onClick={() => navigate("workspace")}>
           <span className="brand-mark">
@@ -548,7 +582,7 @@ export default function App() {
           <div className="sidebar-version">
             <span className="avatar">EL</span>
             <span>
-              EvidenceLab <small>Research preview · v0.1.0</small>
+              EvidenceLab <small>Research preview · v0.2.0</small>
             </span>
             <IconButton
               label="Environment settings"
@@ -574,6 +608,7 @@ export default function App() {
             <strong>{titles[page]}</strong>
           </div>
           <div className="top-actions">
+            <AppearanceControls value={appearance} onChange={setAppearance} />
             <span className={"system-status " + (!online ? "offline" : "")}>
               <span className="live-dot" />
               {online ? "Local system online" : "Connecting to API"}
@@ -600,6 +635,10 @@ export default function App() {
               <p>
                 {
                   {
+                    observatory:
+                      "Inspect real experiment quality, runtime signals and agent work in one colourful instrument panel.",
+                    notebooks:
+                      "An integrated Python and Markdown workspace. Read, edit, execute, and export local experiments.",
                     capabilities:
                       "Math, language, knowledge, and reasoning. Benchmark the model beyond retrieval.",
                     workspace:
@@ -715,6 +754,36 @@ export default function App() {
           )}
           {page === "workspace" && (
             <>
+              <div className="workspace-discovery">
+                <div>
+                  <span className="discovery-glyph">
+                    <ChartNoAxesCombined size={20} />
+                  </span>
+                  <div>
+                    <strong>Your research, with a wider field of view.</strong>
+                    <span>
+                      Inspect experiments, export Matplotlib figures, and work
+                      directly in Python notebooks.
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="secondary"
+                    onClick={() => navigate("notebooks")}
+                  >
+                    <NotebookPen size={14} />
+                    Notebook studio
+                  </button>
+                  <button
+                    className="primary"
+                    onClick={() => navigate("observatory")}
+                  >
+                    <ChartNoAxesCombined size={14} />
+                    Open observatory
+                  </button>
+                </div>
+              </div>
               <div className="workspace-grid">
                 <section className="research-column">
                   <div className="section-title">
@@ -1135,6 +1204,13 @@ export default function App() {
               </div>
             </section>
           )}
+          {page === "vectors" && (
+            <Suspense
+              fallback={<div className="loading">Building concept map…</div>}
+            >
+              <ConceptGraph onPaper={openPaper} />
+            </Suspense>
+          )}
           {page === "agents" && (
             <>
               <div className="architecture-grid">
@@ -1287,6 +1363,8 @@ export default function App() {
           )}
           {page === "evaluation" && (
             <EvaluationPage
+              options={benchmarkOptions}
+              onOptionsChange={setBenchmarkOptions}
               overview={overview}
               k={k}
               setK={setK}
@@ -1299,6 +1377,23 @@ export default function App() {
               currentBench={currentBench}
               setSelectedBench={setSelectedBench}
             />
+          )}
+          {page === "observatory" && (
+            <Suspense
+              fallback={<div className="loading">Opening observatory…</div>}
+            >
+              <Observatory
+                onBenchmark={() => navigate("evaluation")}
+                onNotebook={() => navigate("notebooks")}
+              />
+            </Suspense>
+          )}
+          {page === "notebooks" && (
+            <Suspense
+              fallback={<div className="loading">Opening notebook studio…</div>}
+            >
+              <NotebookStudio />
+            </Suspense>
           )}
           {page === "capabilities" && <Foundation />}
           {page === "training" && (

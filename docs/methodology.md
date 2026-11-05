@@ -37,7 +37,7 @@ For base/adapted comparisons use the same evidence, question IDs, context budget
 
 ## Uncertainty and ablations
 
-Bootstrap 2,000 query-level resamples with replacement and seed 42; report the 2.5th and 97.5th percentiles. Paired comparisons resample the **difference for each matching query**, preserving correlation. CIs on the 24-query subset are wide and can be degenerate. They estimate sampling variability within the selected distribution, not the effect of corpus selection, pretraining contamination or annotation errors.
+By default bootstrap 2,000 query-level resamples (the UI also offers 500, 5,000 and 10,000) with replacement and seed 42; report the 2.5th and 97.5th percentiles. Paired comparisons resample the **difference for each matching query**, preserving correlation. CIs on the 24-query subset are wide and can be degenerate. They estimate sampling variability within the selected distribution, not the effect of corpus selection, pretraining contamination or annotation errors.
 
 Ablations change one intervention at a time: rewrite on/off, reranking on/off, lexical/neural fusion, graph expansion, topology. The CLI supports `--rewrite`, `--rerank`, `--modes`, and `--architecture`. Compare paired deltas on the same query hash. Repeated architecture or prompt searches create a multiple-comparison problem: preregister the main contrast or reserve a final untouched test set. Bootstrap alone does not establish causality.
 

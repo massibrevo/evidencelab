@@ -12,8 +12,12 @@
 
 **ADR-006: Native Qwen text path.** Qwen3.5 multimodal checkpoints require architecture-aware loading. Use `Qwen3_5ForCausalLM`, tokenizer chat templates, local devices, and no remote code. Foundation evaluation passes the preloaded model to the harness's supported HFLM interface. Additional model families can implement the `Generator` protocol; a generic registry is not proof of compatibility with every architecture.
 
-**ADR-007: Explicit compute.** Web endpoints do not spawn training, download arbitrary models or execute code. Optional inference is chosen at server startup; training and broad benchmark execution require terminal commands. Model revisions, dataset hashes, runtime and hyperparameters belong in each artifact.
+**ADR-007: Explicit compute.** Standard research endpoints do not spawn training or download arbitrary models. The optional notebook workspace executes user-selected Python cells only when enabled at startup with `scripts/dev.sh --notebooks`; imported or loaded notebooks never run automatically. Optional inference is chosen at server startup; training and broad benchmark execution require terminal commands. Model revisions, dataset hashes, runtime and hyperparameters belong in each artifact.
 
 **ADR-008: React as an instrument panel.** React Flow shows configured or executed paths; Plotly shows computed projections/history. Empty states carry no invented results. The dashboard is served through Vite in development or FastAPI after a build. It uses no external fonts or analytics.
 
 **ADR-009: Small, synchronous local service.** Mutating/index/inference operations are serialized to avoid races over indexes and GPU state. This prioritizes workstation correctness. There is no distributed queue, cancellation API, authentication, multi-tenant isolation or untrusted internet deployment claim.
+
+**ADR-010: Integrated, trusted-local notebooks.** Bundled notebooks stay immutable; edits create workspace copies. Optimistic revision hashes reject stale writes. Jupyter kernels start lazily on explicit Run, retain variables within a notebook, and are limited to three active sessions. Timeouts stop the kernel and clear state. HTML/JavaScript/SVG display output is not rendered. The kernel has the operator's local permissions; it is not a code sandbox.
+
+**ADR-011: Scientific figures and operational signals.** Matplotlib exports run headlessly with a process lock and a bounded in-memory cache. Plotly provides interactive distribution, score, heatmap and trade-off views. Published reference artifacts are discoverable but never inserted as local run history. Operational KPIs inspect a bounded 100-record window; total run counts are queried separately. Live memory charts contain browser-session samples only.
