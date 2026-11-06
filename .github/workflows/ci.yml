@@ -9,10 +9,13 @@ jobs:
       matrix:
         python: ['3.12', '3.13']
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
         with:
           python-version: ${{ matrix.python }}
+          version: "0.13.7"
       - run: uv sync --locked --extra dev
       - run: uv run pytest -q
       - run: uv run ruff check src tests scripts
@@ -25,8 +28,10 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
@@ -34,3 +39,35 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan Git history for secrets
+        run: |
+          curl --fail --silent --show-error --location --proto '=https' \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            -o "$RUNNER_TEMP/gitleaks.tgz"
+          printf '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  %s\n' \
+            "$RUNNER_TEMP/gitleaks.tgz" | sha256sum -c
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" git --log-opts=--all --redact=100 --no-banner
+      - name: Audit Python and dashboard locks
+        run: |
+          curl --fail --silent --show-error --location --proto '=https' \
+            https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64 \
+            -o "$RUNNER_TEMP/osv-scanner"
+          printf '160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b  %s\n' \
+            "$RUNNER_TEMP/osv-scanner" | sha256sum -c
+          chmod +x "$RUNNER_TEMP/osv-scanner"
+          "$RUNNER_TEMP/osv-scanner" scan source --config=osv-scanner.toml \
+            --lockfile=uv.lock --lockfile=web/package-lock.json
+      - name: Audit dashboard dependencies
+        run: npm --prefix web audit --audit-level=high
+      - name: Audit managed OpenClaw lock
+        if: ${{ hashFiles('src/evidencelab/resources/openclaw/package-lock.json') != '' }}
+        run: npm --prefix src/evidencelab/resources/openclaw audit --omit=dev --audit-level=high

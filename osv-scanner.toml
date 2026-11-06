@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "GHSA-g4r7-86gm-pgqc"
+reason = "Unpatched sqlitedict dependency of the optional lm-eval harness. EvidenceLab always disables its response cache and does not accept external cache paths."

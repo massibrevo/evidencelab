@@ -21,6 +21,7 @@ from . import hub_actions as actions
 from . import hub_experiments as experiments
 from .hub_models import LANGUAGES, ChatInput, Input, Language, LocalModels, ModelRef
 from .models import MODEL_IDS
+from .runtime_security import local_runtime_env
 from .service import ROOT, Lab
 
 router = APIRouter(prefix="/api/hub")
@@ -372,11 +373,7 @@ def train(body: Train, request: Request):
     def work(key, _):
         path = instance.root / "training" / key
         path.parent.mkdir(parents=True, exist_ok=True)
-        env = {
-            key: value
-            for key, value in os.environ.items()
-            if not key.startswith(("EVIDENCELAB_TYPESAFE", "EVIDENCELAB_TELEGRAM", "EVIDENCELAB_WHATSAPP"))
-        }
+        env = local_runtime_env()
         env.update(HF_HUB_OFFLINE="1", HF_DATASETS_OFFLINE="1", PYTHONUNBUFFERED="1")
         log_file = path.parent / f"{key}.log"
         with instance.models.lock:

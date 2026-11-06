@@ -819,13 +819,12 @@ wheels = [
 
 [[package]]
 name = "datasets"
-version = "4.8.5"
+version = "5.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dill" },
     { name = "filelock" },
     { name = "fsspec", extra = ["http"] },
-    { name = "httpx" },
     { name = "huggingface-hub" },
     { name = "multiprocess" },
     { name = "numpy" },
@@ -833,13 +832,12 @@ dependencies = [
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "pyyaml" },
-    { name = "requests" },
     { name = "tqdm" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/66/34/14cd8e76f907f7d4dca2334cfeec9f81d30fd15c25a015f99aaea694eaed/datasets-4.8.5.tar.gz", hash = "sha256:0f0c1c3d56ffff2c93b2f4c63c95bac94f3d7e8621aea2a2a576275233bba772", size = 605649, upload-time = "2026-04-27T15:43:57.384Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/17/e6/b5d8c77f13cc6269660b0f2691e8875777b9d94972e281b7b2c25f25bd9d/datasets-5.1.0.tar.gz", hash = "sha256:1561347daa8841b51351ef2ad1647b4ee4af406852c0f7bd1df587ac1ca7888e", size = 687306, upload-time = "2026-10-05T15:32:32.053Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/65/99/00f3196036501b53032c4b1ab8337a0b978dee832ed276dae3815df4e8b5/datasets-4.8.5-py3-none-any.whl", hash = "sha256:5079900781719c0e063a8efdd2cd95a31ad0c63209178669cd23cf1b926149ff", size = 528973, upload-time = "2026-04-27T15:43:53.702Z" },
+    { url = "https://files.pythonhosted.org/packages/24/cc/7f624629846c709ef1c68aa61bfb8d0ae2638cbe265104a1c2f7a630949e/datasets-5.1.0-py3-none-any.whl", hash = "sha256:86fd08b280485aab82894d2c81842c4151d93b575efea0054315104cb7bc3cec", size = 604432, upload-time = "2026-10-05T15:32:29.892Z" },
 ]
 
 [[package]]
@@ -947,6 +945,8 @@ dependencies = [
 [package.optional-dependencies]
 benchmark = [
     { name = "accelerate" },
+    { name = "datasets" },
+    { name = "fsspec" },
     { name = "lm-eval", extra = ["hf"] },
     { name = "peft" },
     { name = "torch" },
@@ -973,6 +973,7 @@ qlora = [
     { name = "accelerate" },
     { name = "bitsandbytes", marker = "sys_platform == 'linux'" },
     { name = "datasets" },
+    { name = "fsspec" },
     { name = "mlflow" },
     { name = "peft" },
     { name = "torch" },
@@ -987,6 +988,7 @@ rag = [
 train = [
     { name = "accelerate" },
     { name = "datasets" },
+    { name = "fsspec" },
     { name = "mlflow" },
     { name = "peft" },
     { name = "torch" },
@@ -998,11 +1000,14 @@ train = [
 requires-dist = [
     { name = "accelerate", marker = "extra == 'models'", specifier = ">=1.4,<2" },
     { name = "bitsandbytes", marker = "sys_platform == 'linux' and extra == 'qlora'", specifier = ">=0.45,<1" },
-    { name = "datasets", marker = "extra == 'train'", specifier = ">=3.3,<5" },
+    { name = "datasets", marker = "extra == 'benchmark'", specifier = ">=5.0.1,<6" },
+    { name = "datasets", marker = "extra == 'train'", specifier = ">=5.0.1,<6" },
     { name = "evidencelab", extras = ["models"], marker = "extra == 'benchmark'" },
     { name = "evidencelab", extras = ["models"], marker = "extra == 'train'" },
     { name = "evidencelab", extras = ["train"], marker = "extra == 'qlora'" },
     { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "fsspec", marker = "extra == 'benchmark'", specifier = ">=2026.6.0" },
+    { name = "fsspec", marker = "extra == 'train'", specifier = ">=2026.6.0" },
     { name = "httpx", specifier = ">=0.28,<1" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6,<8" },
     { name = "ipykernel", marker = "extra == 'notebooks'", specifier = ">=6,<8" },
@@ -1251,11 +1256,11 @@ wheels = [
 
 [[package]]
 name = "fsspec"
-version = "2026.2.0"
+version = "2026.7.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/51/7c/f60c259dcbf4f0c47cc4ddb8f7720d2dcdc8888c8e5ad84c73ea4531cc5b/fsspec-2026.2.0.tar.gz", hash = "sha256:6544e34b16869f5aacd5b90bdf1a71acb37792ea3ddf6125ee69a22a53fb8bff", size = 313441, upload-time = "2026-02-05T21:50:53.743Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/78/f34251dadb8f3921264a1d9b8946f5e542014ee2614b285261b4e40e6775/fsspec-2026.7.0.tar.gz", hash = "sha256:c803c40f4cf860b49dea58ee3e1c33cb9c790520e233537e1340049f89b82a88", size = 317040, upload-time = "2026-07-28T16:34:51.052Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/ab/fb21f4c939bb440104cc2b396d3be1d9b7a9fd3c6c2a53d98c45b3d7c954/fsspec-2026.2.0-py3-none-any.whl", hash = "sha256:98de475b5cb3bd66bedd5c4679e87b4fdfe1a3bf4d707b151b3c07e58c9a2437", size = 202505, upload-time = "2026-02-05T21:50:51.819Z" },
+    { url = "https://files.pythonhosted.org/packages/fd/3c/6a2bf344106328fd04963664a60b9bb6496fc25df8e962fcdc1367285fb9/fsspec-2026.7.0-py3-none-any.whl", hash = "sha256:b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279", size = 206583, upload-time = "2026-07-28T16:34:49.538Z" },
 ]
 
 [package.optional-dependencies]

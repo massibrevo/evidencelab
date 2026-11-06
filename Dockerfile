@@ -18,4 +18,4 @@ RUN pip install --no-cache-dir uv==0.13.7 && uv sync --locked --no-dev --no-edit
 ENV PATH="/app/.venv/bin:$PATH"
 USER lab
 EXPOSE 8000
-CMD ["uvicorn", "evidencelab.api:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "evidencelab.api:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-proxy-headers"]

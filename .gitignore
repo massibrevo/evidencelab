@@ -16,3 +16,32 @@ data/downloads/
 
 *.tsbuildinfo
 dist/
+
+# Local credentials, settings and user data
+.env.*
+!.env.example
+.envrc
+.npmrc
+.pypirc
+.netrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+credentials.json
+credentials.local.*
+secrets.json
+secrets.local.*
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+agent-workspace/
+notebook-workspace/
+conversations/

@@ -121,6 +121,8 @@ def execute(config: dict, output: Path, quantization: str = "none") -> dict:
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
     results = simple_evaluate(
+        use_cache=None,
+        cache_requests=False,
         model=lm,
         tasks=config["tasks"],
         task_manager=TaskManager(),

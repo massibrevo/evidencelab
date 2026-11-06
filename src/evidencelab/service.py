@@ -28,7 +28,7 @@ def data_dir() -> Path:
 class Lab:
     def __init__(self, home: Path | None = None, seed: bool = True):
         self.home = home or Path(os.environ.get("EVIDENCELAB_HOME", ".evidencelab"))
-        self.home.mkdir(parents=True, exist_ok=True)
+        self.home.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.store = Store(self.home / "lab.sqlite3")
         self.lock = RLock()
         if seed and not self.store.papers():
