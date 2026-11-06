@@ -74,7 +74,7 @@ def create_app(lab: Lab | None = None) -> FastAPI:
         if is_api:
             response.headers["Cache-Control"] = "no-store"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Content-Security-Policy"] = "frame-ancestors 'none'; object-src 'none'; base-uri 'none'"
+        response.headers["Content-Security-Policy"] = "frame-ancestors 'none'; object-src 'none'; base-uri 'none'; img-src 'self' data: blob:"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         return response

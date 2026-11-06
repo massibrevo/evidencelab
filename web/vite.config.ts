@@ -24,7 +24,7 @@ export default defineConfig({
     },
     headers: {
       "X-Frame-Options": "DENY",
-      "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'none'",
+      "Content-Security-Policy": "frame-ancestors 'none'; object-src 'none'; base-uri 'none'; img-src 'self' data: blob:",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "no-referrer",
     },
