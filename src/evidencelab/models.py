@@ -1,10 +1,20 @@
 import platform
 from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import Protocol
 
 import psutil
 
 MODEL_IDS = {"qwen-4b": "Qwen/Qwen3.5-4B", "qwen-0.8b": "Qwen/Qwen3.5-0.8B"}
+
+
+def cached_checkpoint(source: str, revision: str = "main") -> str:
+    from huggingface_hub import snapshot_download
+
+    path = Path(source).expanduser()
+    if path.is_dir():
+        return str(path.resolve())
+    return snapshot_download(source, revision=revision, local_files_only=True)
 
 
 def hardware(probe_torch: bool = False) -> dict:
@@ -101,7 +111,7 @@ class ExtractiveGenerator:
 class TransformersGenerator:
     name = "local Qwen"
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig, *, local_files_only: bool = False):
         import torch
         from transformers import AutoTokenizer, BitsAndBytesConfig, Qwen3_5ForCausalLM
 
@@ -112,12 +122,15 @@ class TransformersGenerator:
             raise ValueError("Supported quantization: none, nf4")
         if config.quantization == "nf4" and hw["device"] != "cuda":
             raise ValueError("NF4 path requires NVIDIA CUDA; use unquantized LoRA/inference on MPS")
+        source = cached_checkpoint(config.model_id, config.revision) if local_files_only else config.model_id
         self.tokenizer = AutoTokenizer.from_pretrained(
-            config.model_id, revision=config.revision, trust_remote_code=False
+            source, revision=config.revision, trust_remote_code=False, local_files_only=local_files_only
         )
         kwargs = {
             "revision": config.revision,
             "trust_remote_code": False,
+            "local_files_only": local_files_only,
+            "use_safetensors": True,
             "dtype": (torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16)
             if hw["device"] == "cuda"
             else torch.float32,
@@ -132,13 +145,13 @@ class TransformersGenerator:
                 bnb_4bit_compute_dtype=kwargs["dtype"],
             )
             kwargs["device_map"] = "auto"
-        self.model = Qwen3_5ForCausalLM.from_pretrained(config.model_id, **kwargs)
+        self.model = Qwen3_5ForCausalLM.from_pretrained(source, **kwargs)
         if config.quantization == "none":
             self.model.to(hw["device"])
         if config.adapter:
             from peft import PeftModel
 
-            self.model = PeftModel.from_pretrained(self.model, config.adapter)
+            self.model = PeftModel.from_pretrained(self.model, config.adapter, local_files_only=local_files_only)
         self.model.eval()
 
     def generate(self, question: str, evidence: list[dict]) -> dict:

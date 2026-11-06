@@ -45,6 +45,11 @@ beforeEach(() => {
         body: options?.body ? JSON.parse(options.body as string) : undefined,
       });
       let value: unknown = [];
+      if (path.endsWith("/hub/models")) value = { models: [
+        { provider: "ollama", name: "gemma3:1b", quantization: "Q4_K_M" },
+        { provider: "transformers", name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0", format: "safetensors" },
+      ], status: {}, actions: {} };
+      if (path.endsWith("/hub/chat")) value = { text: "4", latency_ms: 35, tokens: 1 };
       if (path.endsWith("/overview")) value = overview;
       else if (path.endsWith("/papers")) value = [paper];
       else if (path.endsWith("/papers/a")) value = paper;
@@ -101,6 +106,7 @@ describe("Research workstation", () => {
   it("runs a question and opens an exact source", async () => {
     render(<App />);
     await screen.findByText("Local system online");
+    fireEvent.click(screen.getByRole("button", { name: "Research desk" }));
     fireEvent.change(screen.getByLabelText("Research question"), {
       target: { value: "What evidence supports this claim?" },
     });
@@ -126,7 +132,7 @@ describe("Research workstation", () => {
     expect(
       screen.getByText("Results belong here. Assumptions don’t."),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Fine-tuning" }));
+    fireEvent.click(screen.getByRole("button", { name: "Training curves" }));
     expect(
       screen.getByText("No simulated training curves"),
     ).toBeInTheDocument();
@@ -176,5 +182,25 @@ describe("Research workstation", () => {
       JSON.parse(localStorage.getItem("evidencelab.appearance") ?? "{}")
         .density,
     ).toBe("compact");
+  });
+  it("opens on local chat and sends general prompts in the selected language", async () => {
+    render(<App />);
+    await screen.findByText("2 ready · 2 runtimes");
+    fireEvent.click(screen.getByRole("button", { name: "Browse models" }));
+    expect(screen.getAllByText("Not installed")).toHaveLength(3);
+    fireEvent.change(screen.getByRole("searchbox", { name: "Filter models" }), {
+      target: { value: "tinyllama" },
+    });
+    expect(screen.queryByRole("button", { name: "Use Gemma 3" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Use TinyLlama Chat" }));
+    fireEvent.change(screen.getByLabelText("Language"), { target: { value: "it" } });
+    fireEvent.change(screen.getByLabelText("Messaggio"), { target: { value: "2+2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Invia" }));
+    await screen.findByText("4");
+    expect(calls.find(call => call.path.endsWith("/hub/chat"))?.body).toMatchObject({
+      model: { provider: "transformers", name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0" },
+      language: "it", messages: [{ role: "user", content: "2+2" }],
+    });
+    expect(calls.some(call => call.path.endsWith("/ask"))).toBe(false);
   });
 });

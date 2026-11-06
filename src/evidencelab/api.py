@@ -21,8 +21,10 @@ def create_app(lab: Lab | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app):
         app.state.lab = lab or Lab()
+        from .hub_routes import Hub
         from .notebooks import NotebookWorkspace
 
+        app.state.hub = Hub(app.state.lab)
         app.state.notebooks = NotebookWorkspace(
             app.state.lab.home, os.environ.get("EVIDENCELAB_NOTEBOOK_EXECUTION") == "1"
         )
@@ -46,6 +48,14 @@ def create_app(lab: Lab | None = None) -> FastAPI:
     async def local_origin_guard(request: Request, call_next):
         # CORS alone does not block cross-origin multipart form submissions.
         origin = request.headers.get("origin")
+        if request.url.path.startswith("/api/hub/"):
+            hosts = {"localhost", "127.0.0.1", "::1"}
+            if lab is not None:
+                hosts.add("testserver")
+            if request.url.hostname not in hosts:
+                from fastapi.responses import JSONResponse
+
+                return JSONResponse(status_code=403, content={"detail": "Hub requires a loopback host"})
         trusted = {
             f"http://{host}:{port}"
             for host in ("localhost", "127.0.0.1")
@@ -214,9 +224,11 @@ def create_app(lab: Lab | None = None) -> FastAPI:
                 continue
         return {"suites": SUITES, "runs": result}
 
+    from .hub_routes import router as hub_router
     from .lab_routes import router
 
     app.include_router(router)
+    app.include_router(hub_router)
 
     dist = ROOT / "web/dist"
     if dist.exists():

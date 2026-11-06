@@ -25,6 +25,8 @@ import {
   LayoutDashboard,
   Loader2,
   Network,
+  MessageSquare,
+  Plug,
   PanelLeftClose,
   Play,
   Plus,
@@ -50,6 +52,8 @@ import Foundation from "./Foundation";
 import ModelsPage from "./ModelsPage";
 import PapersPage from "./PapersPage";
 import TrainingPage from "./TrainingPage";
+import Hub, { type HubPage } from "./Hub";
+import { navigation, readLanguage, translator, type Language } from "./locale";
 import type {
   Answer,
   Benchmark,
@@ -67,6 +71,7 @@ const Observatory = lazy(() => import("./Observatory"));
 const NotebookStudio = lazy(() => import("./NotebookStudio"));
 const ConceptGraph = lazy(() => import("./ConceptGraph"));
 type Page =
+  | HubPage
   | "observatory"
   | "notebooks"
   | "capabilities"
@@ -79,6 +84,10 @@ type Page =
   | "evaluation"
   | "models";
 const titles: Record<Page, string> = {
+  chat: "Local chat",
+  crew: "Agent workshop",
+  experiments: "Model experiments",
+  actions: "Actions & integrations",
   observatory: "Experiment observatory",
   notebooks: "Notebook studio",
   capabilities: "Model benchmarks",
@@ -92,6 +101,15 @@ const titles: Record<Page, string> = {
   models: "Foundation models",
 };
 const groups = [
+  {
+    label: "WORKBENCH",
+    items: [
+      ["chat", MessageSquare, "Local chat"],
+      ["crew", Network, "Agent workshop"],
+      ["experiments", FlaskConical, "Model experiments"],
+      ["actions", Plug, "Actions & integrations"],
+    ],
+  },
   {
     label: "RESEARCH",
     items: [
@@ -124,7 +142,14 @@ const colors: Record<string, string> = {
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
 export default function App() {
-  const [page, setPage] = useState<Page>("workspace"),
+  const [language, setLanguage] = useState<Language>(readLanguage);
+  const t = translator(language);
+  const labelFor = (id: string, fallback: string) => navigation[id] ? t(...navigation[id]) : fallback;
+  useEffect(() => {
+    document.documentElement.lang = language;
+    localStorage.setItem("evidencelab.language", language);
+  }, [language]);
+  const [page, setPage] = useState<Page>("chat"),
     [overview, setOverview] = useState<Overview | null>(null),
     [papers, setPapers] = useState<Paper[]>([]),
     [projection, setProjection] = useState<Projection | null>(null),
@@ -504,13 +529,14 @@ export default function App() {
       </p>
     </div>
   );
+  const hubPage = page === "chat" || page === "crew" || page === "experiments" || page === "actions" ? page : null;
   return (
     <div
       data-density={appearance.density}
       className={"app " + (mobile ? "menu-open" : "")}
     >
       <aside className="sidebar">
-        <button className="brand" onClick={() => navigate("workspace")}>
+        <button className="brand" onClick={() => navigate("chat")}>
           <span className="brand-mark">
             <span />
             <span />
@@ -518,7 +544,7 @@ export default function App() {
           </span>
           <span>
             EvidenceLab
-            <span className="brand-caption">OPEN RESEARCH SYSTEMS</span>
+            <span className="brand-caption">{t("LOCAL AI WORKBENCH", "LABORATORIO AI LOCALE", "LABORATORIO DE IA LOCAL")}</span>
           </span>
         </button>
         <button className="project-switch" onClick={() => setCommand(true)}>
@@ -526,14 +552,16 @@ export default function App() {
             <FlaskConical size={16} />
           </span>
           <span>
-            Personal laboratory<small>Local workspace</small>
+            {t("Personal laboratory", "Laboratorio personale", "Laboratorio personal")}
+            <small>{t("Local workspace", "Spazio di lavoro locale", "Espacio de trabajo local")}</small>
           </span>
           <ChevronsUpDown size={13} />
         </button>
         <nav>
           {groups.map((group) => (
             <div className="nav-group" key={group.label}>
-              <span className="nav-label">{group.label}</span>
+              <span className="nav-label">{group.label === "WORKBENCH" ? t("WORKBENCH", "LABORATORIO", "LABORATORIO") :
+                group.label === "RESEARCH" ? t("RESEARCH", "RICERCA", "INVESTIGACIÓN") : t("EXPERIMENTS", "ESPERIMENTI", "EXPERIMENTOS")}</span>
               {group.items.map(([id, Icon, label]) => {
                 const NavIcon = Icon as typeof Activity;
                 return (
@@ -543,7 +571,7 @@ export default function App() {
                     onClick={() => navigate(id as Page)}
                   >
                     <NavIcon size={17} />
-                    <span>{label as string}</span>
+                    <span>{labelFor(id as string, label as string)}</span>
                     {id === "papers" && (
                       <small>{overview?.papers ?? "—"}</small>
                     )}
@@ -557,15 +585,13 @@ export default function App() {
         <div className="sidebar-bottom">
           <div className="local-card">
             <div>
-              <span className="live-dot" /> LOCAL-FIRST BY DESIGN
+              <span className="live-dot" /> {t("LOCAL WORKSTATION", "POSTAZIONE LOCALE", "ESTACIÓN LOCAL")}
             </div>
             <p>
-              Your papers. Your models.
-              <br />
-              Your machine.
+              {t("Models, data, and tools on your machine.", "Modelli, dati e strumenti sul tuo computer.", "Modelos, datos y herramientas en tu equipo.")}
             </p>
             <button onClick={() => navigate("models")}>
-              View environment <ArrowUpRight size={13} />
+              {t("View environment", "Mostra ambiente", "Ver entorno")} <ArrowUpRight size={13} />
             </button>
           </div>
           <a
@@ -575,13 +601,13 @@ export default function App() {
             rel="noreferrer"
           >
             <GitBranch size={15} />
-            Open-source project
+            {t("Open-source project", "Progetto open source", "Proyecto de código abierto")}
             <ArrowUpRight size={13} />
           </a>
           <div className="sidebar-version">
             <span className="avatar">EL</span>
             <span>
-              EvidenceLab <small>Research preview · v0.2.0</small>
+              EvidenceLab <small>{t("Local preview", "Anteprima locale", "Vista previa local")}</small>
             </span>
             <IconButton
               label="Environment settings"
@@ -602,19 +628,24 @@ export default function App() {
               <PanelLeftClose size={17} />
             </IconButton>
             <span className="crumb-divider" />
-            <span>Laboratory</span>
+            <span>{t("Laboratory", "Laboratorio", "Laboratorio")}</span>
             <ChevronRight size={13} />
-            <strong>{titles[page]}</strong>
+            <strong>{labelFor(page, titles[page])}</strong>
           </div>
           <div className="top-actions">
+            <select className="hub-language" value={language} aria-label={t("Language", "Lingua", "Idioma")}
+              onChange={event => setLanguage(event.target.value as Language)}>
+              <option value="en">English</option><option value="it">Italiano</option><option value="es">Español</option>
+            </select>
             <AppearanceControls value={appearance} onChange={setAppearance} />
             <span className={"system-status " + (!online ? "offline" : "")}>
               <span className="live-dot" />
-              {online ? "Local system online" : "Connecting to API"}
+              {online ? t("Local system online", "Sistema locale online", "Sistema local conectado") :
+                t("Connecting to API", "Connessione all’API", "Conectando con la API")}
             </span>
             <button className="command-button" onClick={() => setCommand(true)}>
               <Search size={14} />
-              <span>Search anything</span>
+              <span>{t("Search anything", "Cerca nel laboratorio", "Buscar en el laboratorio")}</span>
               <kbd>⌘ K</kbd>
             </button>
             <span className="top-avatar">EL</span>
@@ -624,16 +655,27 @@ export default function App() {
           <div className="page-heading">
             <div>
               <div className="eyebrow">
-                <span className="small-line" /> THE OPEN-SOURCE LLM ENGINEERING
-                LAB
+                <span className="small-line" /> {t("THE LOCAL AI WORKBENCH", "IL LABORATORIO AI LOCALE", "EL LABORATORIO DE IA LOCAL")}
               </div>
               <h1>
-                {titles[page]}
+                {labelFor(page, titles[page])}
                 <span className="heading-period">.</span>
               </h1>
               <p>
                 {
                   {
+                    chat: t("Talk to your downloaded models, switch runtimes, and review suggested actions.",
+                      "Parla con i modelli scaricati, cambia runtime e rivedi le azioni suggerite.",
+                      "Conversa con los modelos descargados, cambia de entorno y revisa las acciones sugeridas."),
+                    crew: t("Create specialist agents and follow their work from brief to final answer.",
+                      "Crea agenti specializzati e segui il lavoro dal compito alla risposta finale.",
+                      "Crea agentes especializados y sigue su trabajo desde el encargo hasta la respuesta final."),
+                    experiments: t("Bring your own data, measure model behavior, and train adapters.",
+                      "Importa i tuoi dati, misura il comportamento dei modelli e addestra adattatori.",
+                      "Trae tus datos, mide el comportamiento de los modelos y entrena adaptadores."),
+                    actions: t("Control what models can do with the web, your desktop, and messaging services.",
+                      "Controlla ciò che i modelli possono fare sul web, sul computer e nei servizi di messaggistica.",
+                      "Controla lo que los modelos pueden hacer en la web, el equipo y los servicios de mensajería."),
                     observatory:
                       "Inspect real experiment quality, runtime signals and agent work in one research instrument panel.",
                     notebooks:
@@ -661,7 +703,7 @@ export default function App() {
               </p>
             </div>
             <div className="heading-actions">
-              {page === "evaluation" ? (
+              {hubPage ? null : page === "evaluation" ? (
                 <button
                   className="primary"
                   disabled={!!busy || !online}
@@ -694,6 +736,10 @@ export default function App() {
               </IconButton>
             </div>
           )}
+          <Hub page={hubPage} language={language} showCurves={() => {
+            navigate("training");
+            refresh().catch(error => setError(error.message));
+          }} />
           {(page === "workspace" || page === "papers") && (
             <div className="stat-grid">
               {[
@@ -1524,7 +1570,7 @@ export default function App() {
             </div>
             <div className="command-results">
               <span className="nav-label">GO TO</span>
-              {Object.entries(titles)
+              {Object.entries(titles).map(([id, title]) => [id, labelFor(id, title)])
                 .filter(([, title]) =>
                   title.toLowerCase().includes(commandSearch.toLowerCase()),
                 )

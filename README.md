@@ -1,10 +1,10 @@
 # EvidenceLab
 
-**The open-source LLM engineering lab.** Inspect the evidence. Change the system. Measure the difference.
+**An open-source workbench for local AI.** Chat with downloaded models, build agent teams, and measure what changes when you switch models or train an adapter.
 
-A local-first research workstation for paper ingestion, cited research answers, retrieval experiments, agent orchestration, and reproducible evaluation. Includes an offline SciFact demo, a FastAPI service, a React control center, mathematical notebooks, and optional Qwen3.5 / PEFT / TRL workflows. No paid APIs or mandatory API keys.
+A local-first environment for AI and data experiments. Run Ollama, a compatible local server, or cached Hugging Face models. Bring your own datasets, evaluate models and adapters, and review external actions before they run. The evidence and retrieval lab, notebooks and public benchmark recipes are also available. No API keys are required for local workflows.
 
-> Research software, v0.2.0. The default answer engine extracts source sentences; it is not an LLM. Neural models and training require optional dependencies and downloads. No model quality or training results are invented. [Verification report](docs/verification.md).
+> Local workstation preview. **Local chat** uses a model you select. **Research desk** starts with an offline, extractive paper pipeline. [Workbench setup and limits](docs/hub.md).
 
 ## Quick start · Python 3.12–3.14, Node 22+
 
@@ -17,7 +17,14 @@ cd web && npm ci && cd ..
 ./scripts/dev.sh
 ```
 
-Open http://localhost:5173. API docs: http://127.0.0.1:8000/docs. The demo runs on CPU, needs no credentials, and makes no external requests after installation. `scripts/dev.sh` starts both processes and stops them together on Ctrl-C.
+Open the dashboard URL printed by the launcher. The paper demo runs on CPU without credentials. For chat, start Ollama separately, run `ollama pull gemma3:1b`, then open **Browse models**, select **Refresh**, and choose an installed model. `scripts/dev.sh` starts the dashboard and API and stops them together on Ctrl-C.
+
+- **Agent workshop:** create agents, assemble a team, and follow live handoffs.
+- **Model experiments:** version JSONL datasets, compare a local model with a LoRA adapter, or optionally evaluate a typed decision backend such as Jev.
+- **Actions & integrations:** approve individual web, desktop and messaging actions.
+- **Top bar:** switch the workbench between English, Italian and Spanish.
+
+See the [workbench guide](docs/hub.md) for the model catalog, dataset schema, training and provider setup.
 
 ```bash
 evidencelab ask "All hematopoietic stem cells segregate their chromosomes randomly."
@@ -30,7 +37,7 @@ The wheel includes offline demo data; the dashboard and development scripts run 
 
 For a locked installation, use `uv sync --locked --extra dev` and `source .venv/bin/activate`. The Python lock includes optional extras; only requested extras are installed. The dashboard uses `npm ci` with its committed lockfile.
 
-If default ports are busy: `EVIDENCELAB_WEB_PORT=5199 EVIDENCELAB_API_PORT=8199 ./scripts/dev.sh`.
+The launcher automatically selects available ports when defaults are busy and prints the actual URLs. To choose starting ports: `EVIDENCELAB_WEB_PORT=5199 EVIDENCELAB_API_PORT=8199 ./scripts/dev.sh`.
 
 ## Notebook studio and experiment observatory
 
@@ -75,16 +82,21 @@ Use `--adapter PATH` for adapted-model comparisons, `--revision COMMIT_SHA` for 
 | 05 Coordination | Single, supervisor, hierarchical and rule-routed swarm workflows, handoff graphs | Deterministic orchestration scaffold; Qwen can synthesize with the same evidence interface. No emergent-swarm claim. |
 | 06 Evaluation | Recall@k, MRR@k, binary nDCG@k, bootstrap CIs, paired deltas, per-query latency, RSS, dataset/config fingerprints, ablations | UI Evaluation lab or CLI; agent and model suites use the same runner, generated answers retained for independent review |
 
-## Control center
+## Workbench screenshots
 
-A minimalist white research workspace inspired by Jupyter, with neutral grey surfaces, blue actions, orange notebook accents, density controls, integrated Python notebooks, scientific chart exports, evidence drawers, configurable pipelines, vector/concept explorers, training curves and measured leaderboards. Charts display actual corpus projections and recorded runs. Training charts remain empty until real artifacts exist.
+The model library shows five detected checkpoints across Ollama and Transformers on this machine. Model cards show available details such as file size, quantization, license, and revision. The available models depend on the weights you install locally.
 
-![EvidenceLab control center](docs/images/control-center.jpg)
+![EvidenceLab Local Chat with five ready models and TinyLlama checkpoint details](docs/images/model-library.jpg)
+
+The Agent Workshop shows which agent is active and records each handoff. This capture shows the four preset agents running on a local Gemma model.
+
+![Agent Workshop with three completed handoffs and Relay generating the final response](docs/images/agent-workshop.jpg)
 
 <details>
 <summary>More workstation views</summary>
 
-![Agent execution trace](docs/images/agent-studio.jpg)
+![Research desk and source citations](docs/images/control-center.jpg)
+![Research agent execution trace](docs/images/agent-studio.jpg)
 ![Vector explorer](docs/images/vector-explorer.jpg)
 ![Broad model benchmarks](docs/images/model-benchmarks.jpg)
 ![Experiment observatory](docs/images/observatory.jpg)
@@ -97,6 +109,9 @@ A minimalist white research workspace inspired by Jupyter, with neutral grey sur
 ```mermaid
 flowchart LR
   UI[React / TypeScript] --> API[FastAPI · localhost]
+  API --> Hub[Local chat, model library and agent teams]
+  Hub --> Runtime[Ollama / Transformers / compatible local servers]
+  Hub --> Review[Action proposals and human approval]
   API --> DB[(SQLite · papers + runs)]
   API --> Ingest[PDF / text / arXiv]
   Ingest --> Chunks[Offset-preserving chunks]
@@ -114,9 +129,9 @@ flowchart LR
   Train --> MLflow[Local MLflow]
 ```
 
-The CPU baseline has no PyTorch dependency. Qdrant runs embedded in memory as a rebuildable index; SQLite stores original paper text. Model inference is selected at process startup, not by a web endpoint that can trigger arbitrary downloads. The browser only calls the local service. Binding to `127.0.0.1` is intentional; this development workstation is not an authenticated multi-tenant service.
+The CPU paper baseline has no PyTorch dependency. Qdrant runs embedded in memory as a rebuildable index, and SQLite stores original paper text. The separate workbench model selector uses local inference endpoints or cached weights. It never downloads a checkpoint automatically. Optional hosted decisions and integrations are explicit workflows. Binding to `127.0.0.1` is intentional for this single-user workstation.
 
-## Models and hardware
+## Research Desk models and hardware
 
 Default foundation-model configuration: `Qwen/Qwen3.5-4B`; lightweight profile: `Qwen/Qwen3.5-0.8B`. Both official cards identify Apache-2.0 weights. Model calls use the native `Qwen3_5ForCausalLM` text path with no remote code. These are multimodal checkpoints; EvidenceLab currently supports text only.
 

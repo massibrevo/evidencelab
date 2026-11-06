@@ -1,0 +1,349 @@
+.hub {
+  display: grid;
+  gap: 18px;
+}
+.hub .panel {
+  margin: 0;
+  min-width: 0;
+}
+.hub-language {
+  width: auto;
+  min-width: 84px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+}
+.hub-card,
+.hub-model-bar,
+.hub-chat,
+.hub-approval {
+  padding: clamp(14px, 2.2vw, 24px);
+}
+.hub-card,
+.hub-card form,
+.hub-chat form,
+.hub-model-setup[open],
+.hub-job {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+.hub-card h2,
+.hub-card-head h2 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+.hub-card p,
+.hub-model-setup p {
+  margin: 0;
+  color: var(--muted);
+}
+.hub label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 0.86rem;
+}
+.hub input,
+.hub select,
+.hub textarea {
+  width: 100%;
+  min-width: 0;
+}
+.hub .primary,
+.hub .secondary {
+  justify-self: start;
+  min-height: 34px;
+}
+.hub .error {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.hub-model-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+.hub-model-setup {
+  grid-column: 1 / -1;
+}
+.hub details summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  padding-block: 5px;
+}
+.hub-recipes,
+.hub-buttons,
+.hub-inline {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.hub-inline input,
+.hub-inline select {
+  width: auto;
+  max-width: 100%;
+}
+.hub-recipes code {
+  background: #edf0f4;
+  padding: 4px 7px;
+  border-radius: 3px;
+}
+.hub-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.hub-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+.hub-card-head h2 {
+  flex: 1;
+}
+.hub-chat {
+  display: grid;
+  gap: 14px;
+}
+.hub-turns {
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  min-height: 220px;
+  max-height: 56vh;
+  overflow: auto;
+}
+.hub-chat-intro {
+  text-align: center;
+  align-self: center;
+  padding: 18px;
+}
+.hub-chat-intro h3 {
+  font-size: 1.45rem;
+  margin: 5px 0;
+}
+.hub-chat-intro .hub-robot {
+  width: 65px;
+  margin-inline: auto;
+}
+.hub-turn {
+  max-width: min(82ch, 96%);
+  padding: 11px 14px;
+  border-radius: 9px;
+  background: #f4f5f7;
+}
+.hub-turn.user {
+  justify-self: end;
+  background: #e8f1fb;
+}
+.hub-turn p,
+.hub-prewrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 5px 0 0;
+}
+.hub-turns small {
+  color: #4e596d;
+}
+.hub-deck {
+  padding: clamp(14px, 2.2vw, 24px);
+  border-radius: 12px;
+  color: #eaf3ff;
+  background:
+    radial-gradient(ellipse at 44% -40%, #294c5a, transparent 72%), #111827;
+  box-shadow: inset 0 0 0 1px #2e4158;
+}
+.hub-deck .hub-card-head {
+  border-bottom: 1px solid #3b475a;
+  padding-bottom: 13px;
+}
+.hub-crew {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 18px;
+  min-height: 150px;
+}
+.hub-crew-slot {
+  display: flex;
+  align-items: center;
+  flex: 1 1 100px;
+  gap: 12px;
+  min-width: 0;
+}
+.hub-agent {
+  width: 100%;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  color: #f4f7fc;
+  background: #1c2638;
+  border: 1px solid #41516a;
+  border-radius: 9px;
+}
+.hub-agent.active {
+  box-shadow: 0 0 18px #64e4db55;
+  border-color: #64e4db;
+}
+.hub-agent:disabled {
+  opacity: 1;
+}
+.hub-agent small,
+.hub-agent-number {
+  color: #b5c8e3;
+}
+.hub-agent-number {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-family: monospace;
+}
+.hub-agent .hub-robot {
+  width: min(88px, 100%);
+  height: 75px;
+}
+.hub-link {
+  color: #78b6bc;
+  flex-shrink: 0;
+}
+.hub-status {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: #364255;
+  background: #eef1f4;
+}
+.hub-status.running,
+.hub-status.pending,
+.hub-status.executing {
+  background: #fff1c9;
+  color: #614309;
+}
+.hub-status.completed {
+  background: #ddf3e8;
+  color: #155940;
+}
+.hub-status.failed,
+.hub-status.denied {
+  background: #f9e5e5;
+  color: #883332;
+}
+.hub-job {
+  border-top: 1px solid #dddfe5;
+  padding-top: 12px;
+}
+.hub-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.hub-metrics > div {
+  display: grid;
+  gap: 3px;
+  border-left: 2px solid #769bbe;
+  padding-inline: 10px;
+}
+.hub-metrics strong {
+  font-size: 1.15rem;
+}
+.hub-metrics span {
+  font-size: 0.8rem;
+}
+.hub-history {
+  display: grid;
+  gap: 5px;
+}
+.hub-history button {
+  width: 100%;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.hub-bars {
+  display: grid;
+  gap: 8px;
+}
+.hub-bars > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) minmax(70px, 2fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.hub-bars span {
+  overflow-wrap: anywhere;
+}
+.hub-bars meter {
+  width: 100%;
+  accent-color: #4586b7;
+}
+.hub-samples {
+  display: grid;
+  gap: 10px;
+  padding-inline-start: 22px;
+}
+.hub .hub-check {
+  display: flex;
+  align-items: start;
+  gap: 7px;
+}
+.hub .hub-check input {
+  width: auto;
+}
+.hub-capabilities {
+  display: grid;
+  gap: 7px;
+  padding: 0;
+  margin: 0;
+}
+.hub-capabilities li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hub-capabilities strong {
+  font-size: 0.8rem;
+}
+.hub-approval {
+  border-color: #c69a38;
+}
+.hub-approval dl {
+  margin: 14px 0;
+  display: grid;
+  gap: 7px;
+}
+.hub-approval dt {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.hub-approval dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.hub-result {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 260px;
+  overflow: auto;
+  background: #f4f5f7;
+  padding: 10px;
+}
+@media (max-width: 950px) {
+  .hub-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .hub-model-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hub-language {
+    min-width: 0;
+    width: 85px;
+  }
+}
