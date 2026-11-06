@@ -15,6 +15,7 @@ def main():
         help="Train-only JSONL; DPO: prompt/chosen/rejected; GRPO: prompt/label",
     )
     p.add_argument("--model", default="Qwen/Qwen3.5-0.8B")
+    p.add_argument("--revision", default="main", help="Prefer an immutable Hugging Face commit for training")
     p.add_argument("--output", default="artifacts/preferences")
     p.add_argument("--execute", action="store_true", help="Download model and start training")
     a = p.parse_args()
@@ -34,9 +35,11 @@ def main():
     from transformers import AutoTokenizer, Qwen3_5ForCausalLM
     from trl import DPOConfig, DPOTrainer, GRPOConfig, GRPOTrainer
 
-    tokenizer = AutoTokenizer.from_pretrained(a.model, trust_remote_code=False)
+    tokenizer = AutoTokenizer.from_pretrained(a.model, revision=a.revision, trust_remote_code=False)
     tokenizer.pad_token = tokenizer.eos_token
-    model = Qwen3_5ForCausalLM.from_pretrained(a.model, trust_remote_code=False)
+    model = Qwen3_5ForCausalLM.from_pretrained(
+        a.model, revision=a.revision, trust_remote_code=False, use_safetensors=True
+    )
     peft = LoraConfig(r=8, lora_alpha=16, target_modules=["q_proj", "v_proj"], task_type="CAUSAL_LM")
     dataset = Dataset.from_list(records)
     common = dict(

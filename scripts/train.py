@@ -77,7 +77,7 @@ def main():
     dtype = (
         torch.bfloat16 if cuda and torch.cuda.is_bf16_supported() else torch.float16 if mps else torch.float32
     )
-    kwargs = {"revision": a.revision, "dtype": dtype, "trust_remote_code": False}
+    kwargs = {"revision": a.revision, "dtype": dtype, "trust_remote_code": False, "use_safetensors": True}
     if a.quantization == "nf4":
         kwargs.update(
             quantization_config=BitsAndBytesConfig(

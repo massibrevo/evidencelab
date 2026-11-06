@@ -57,6 +57,18 @@ def local_base(env: str, default: str) -> str:
     return str(url.copy_with(host="127.0.0.1") if url.host == "localhost" else url).rstrip("/")
 
 
+class ModelNotDownloaded(ValueError):
+    pass
+
+
+def is_downloaded_ollama_model(name: str, metadata: dict) -> bool:
+    return (
+        not name.lower().endswith(("-cloud", ":cloud"))
+        and not metadata.get("remote_host")
+        and not metadata.get("remote_model")
+    )
+
+
 def cached_inventory() -> list[dict]:
     """List supported local snapshots without network access or importing Torch."""
     if not all(find_spec(package) is not None for package in ("torch", "transformers", "huggingface_hub")):
@@ -122,7 +134,7 @@ class LocalModels:
                         if (
                             isinstance(name, str)
                             and 0 < len(name) <= 512
-                            and not name.endswith(("-cloud", ":cloud"))
+                            and (provider != "ollama" or is_downloaded_ollama_model(name, row))
                         ):
                             info = {"provider": provider, "name": name}
                             if provider == "ollama":
@@ -182,7 +194,7 @@ class LocalModels:
         body = {"model": ref.name, "messages": messages, "stream": False}
         ollama = ref.provider == "ollama"
         if ollama:
-            if ref.name.endswith(("-cloud", ":cloud")):
+            if not is_downloaded_ollama_model(ref.name, {}):
                 raise ValueError("Select a downloaded Ollama model.")
             body["options"] = {"temperature": 0, "num_predict": limit}
             if ref.name.startswith(("qwen3", "gemma4")):
@@ -191,9 +203,18 @@ class LocalModels:
             body.update(temperature=0, max_tokens=limit)
         try:
             with httpx.Client(timeout=httpx.Timeout(180, connect=3), trust_env=False) as client:
-                response = client.post(
-                    self.base(ref.provider) + ("/api/chat" if ollama else "/chat/completions"), json=body
-                )
+                base = self.base(ref.provider)
+                if ollama:
+                    inventory = client.get(base + "/api/tags", timeout=3).raise_for_status().json()["models"]
+                    aliases = {ref.name}
+                    if ":" not in ref.name.rsplit("/", 1)[-1]:
+                        aliases.add(ref.name + ":latest")
+                    if not any(
+                        row.get("name") in aliases and is_downloaded_ollama_model(row["name"], row)
+                        for row in inventory
+                    ):
+                        raise ModelNotDownloaded("Select a downloaded local Ollama model.")
+                response = client.post(base + ("/api/chat" if ollama else "/chat/completions"), json=body)
                 response.raise_for_status()
                 data = response.json()
             if ollama:
@@ -201,6 +222,8 @@ class LocalModels:
             return data["choices"][0]["message"]["content"], (data.get("usage") or {}).get(
                 "completion_tokens"
             )
+        except ModelNotDownloaded as error:
+            raise ValueError(str(error)) from None
         except httpx.HTTPStatusError as error:
             raise ValueError(
                 f"{ref.provider} returned HTTP {error.response.status_code}. "

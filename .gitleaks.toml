@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Two public Transformers class names in the same import"
+condition = "AND"
+regexTarget = "match"
+paths = ['''(?:^|/)scripts/preferences\.py$''']
+regexes = ['''^AutoTokenizer, Qwen3_5ForCausalLM$''']

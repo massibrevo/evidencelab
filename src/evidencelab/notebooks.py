@@ -19,13 +19,14 @@ from threading import Lock, RLock
 
 import nbformat
 
+from .runtime_security import local_runtime_env, write_json
 from .service import ROOT
 
 
 class NotebookWorkspace:
     def __init__(self, home: Path, enabled: bool = False):
         self.root = home / "notebook-workspace"
-        self.root.mkdir(parents=True, exist_ok=True)
+        self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.home = home.resolve()
         self.enabled = enabled
         bundled = ROOT / "notebooks"
@@ -156,9 +157,7 @@ class NotebookWorkspace:
                 raise ValueError("Invalid notebook structure: " + error.message[:200]) from error
             book.metadata["modified"] = datetime.now(UTC).isoformat()
             destination = self.root / f"{self._id(identifier)}.ipynb"
-            temporary = destination.with_suffix(".tmp")
-            nbformat.write(book, temporary)
-            temporary.replace(destination)
+            write_json(destination, book)
             return self.get(identifier)
 
     def _kernel(self, identifier: str):
@@ -174,11 +173,11 @@ class NotebookWorkspace:
                 raise ValueError("Install .[notebooks] in the API's Python environment to execute cells") from error
 
             directory = self.root / "kernels"
-            directory.mkdir(exist_ok=True)
+            directory.mkdir(mode=0o700, exist_ok=True)
             km = KernelManager(kernel_name="python3", connection_file=str(directory / f"{identifier}.json"))
             km.kernel_spec.argv = [sys.executable, "-m", "ipykernel_launcher", "-f", "{connection_file}"]
             env = dict(
-                os.environ,
+                local_runtime_env(),
                 EVIDENCELAB_HOME=str(self.home),
                 EVIDENCELAB_ROOT=str(ROOT),
                 IPYTHONDIR=str(directory / "ipython"),

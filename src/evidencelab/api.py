@@ -7,12 +7,14 @@ from typing import Literal
 
 import httpx
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .ingest import arxiv_paper, pdf_paper
 from .models import MODEL_IDS, hardware
+from .runtime_security import RequestBodyLimit
 from .schema import ArxivRequest, BenchmarkRequest, Investigation, Paper, Query, TextUpload
 from .service import ROOT, Lab, data_dir
 
@@ -44,37 +46,51 @@ def create_app(lab: Lab | None = None) -> FastAPI:
         allow_headers=["Content-Type"],
     )
 
+    app.add_middleware(RequestBodyLimit)
+    hosts = {"localhost", "127.0.0.1", "::1"}
+    if lab is not None:
+        hosts.add("testserver")
+    trusted = {
+        f"http://{host}:{port}"
+        for host in ("localhost", "127.0.0.1", "[::1]")
+        for port in (
+            os.environ.get("EVIDENCELAB_WEB_PORT", "5173"),
+            os.environ.get("EVIDENCELAB_API_PORT", "8000"),
+        )
+    }
+
     @app.middleware("http")
     async def local_origin_guard(request: Request, call_next):
-        # CORS alone does not block cross-origin multipart form submissions.
         origin = request.headers.get("origin")
-        if request.url.path.startswith("/api/hub/"):
-            hosts = {"localhost", "127.0.0.1", "::1"}
-            if lab is not None:
-                hosts.add("testserver")
-            if request.url.hostname not in hosts:
-                from fastapi.responses import JSONResponse
+        is_api = request.url.path.startswith("/api/")
+        if request.url.hostname not in hosts:
+            response = JSONResponse({"detail": "EvidenceLab requires a loopback host"}, status_code=403)
+        elif is_api and request.headers.get("sec-fetch-site") == "cross-site":
+            response = JSONResponse({"detail": "Cross-site request rejected"}, status_code=403)
+        elif request.method in {"POST", "PUT", "PATCH", "DELETE"} and origin and origin not in trusted:
+            response = JSONResponse({"detail": "Cross-origin mutation rejected"}, status_code=403)
+        else:
+            response = await call_next(request)
+        if is_api:
+            response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = "frame-ancestors 'none'; object-src 'none'; base-uri 'none'"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        return response
 
-                return JSONResponse(status_code=403, content={"detail": "Hub requires a loopback host"})
-        trusted = {
-            f"http://{host}:{port}"
-            for host in ("localhost", "127.0.0.1")
-            for port in (
-                os.environ.get("EVIDENCELAB_WEB_PORT", "5173"),
-                os.environ.get("EVIDENCELAB_API_PORT", "8000"),
-            )
-        }
-        if request.method in {"POST", "PUT", "PATCH", "DELETE"} and origin and origin not in trusted:
-            from fastapi.responses import JSONResponse
-
-            return JSONResponse(status_code=403, content={"detail": "Cross-origin mutation rejected"})
-        return await call_next(request)
+    @app.exception_handler(RequestValidationError)
+    async def invalid_request(_, error: RequestValidationError):
+        # Pydantic errors can contain the original submitted value, including a credential.
+        details = [
+            {key: item[key] for key in ("loc", "msg", "type")}
+            for item in error.errors()
+        ]
+        return JSONResponse({"detail": details}, status_code=422)
 
     @app.exception_handler(ValueError)
-    async def invalid(_, error):
-        from fastapi.responses import JSONResponse
-
-        return JSONResponse(status_code=400, content={"detail": str(error)})
+    async def invalid(_, error: ValueError):
+        return JSONResponse({"detail": str(error)}, status_code=400)
 
     def get(request: Request) -> Lab:
         return request.app.state.lab
@@ -127,8 +143,10 @@ def create_app(lab: Lab | None = None) -> FastAPI:
         content = file.file.read(20 * 1024 * 1024 + 1)
         try:
             paper = pdf_paper(content, Path(file.filename or "paper.pdf").name)
-        except Exception as e:
-            raise HTTPException(400, f"Could not parse PDF: {str(e)[:200]}") from e
+        except ValueError:
+            raise
+        except Exception:
+            raise HTTPException(400, "Could not parse the PDF.") from None
         get(request).add(paper)
         return {"id": paper.id, "status": "indexed"}
 

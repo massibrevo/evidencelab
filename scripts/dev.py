@@ -8,6 +8,8 @@ import sys
 import time
 from pathlib import Path
 
+from evidencelab.runtime_security import local_runtime_env
+
 
 def available_port(start: int, excluded: set[int] | None = None) -> int:
     for port in range(start, min(start + 100, 65536)):
@@ -34,21 +36,14 @@ def main():
     print(f"EvidenceLab API: http://127.0.0.1:{api_port}/docs", flush=True)
     children = []
     try:
-        for command in (
-            [
-                sys.executable,
-                "-m",
-                "uvicorn",
-                "evidencelab.api:create_app",
-                "--factory",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                api_port,
-            ],
-            ["npm", "--prefix", "web", "run", "dev", "--", "--host", "127.0.0.1", "--port", web_port],
-        ):
-            children.append(subprocess.Popen(command, cwd=root, start_new_session=True))
+        api = [
+            sys.executable, "-m", "uvicorn", "evidencelab.api:create_app", "--factory",
+            "--host", "127.0.0.1", "--port", api_port, "--no-proxy-headers",
+        ]
+        web = ["npm", "--prefix", "web", "run", "dev", "--", "--host", "127.0.0.1", "--port", web_port]
+        web_env = local_runtime_env() | {"EVIDENCELAB_API_PORT": api_port}
+        children.append(subprocess.Popen(api, cwd=root, start_new_session=True))
+        children.append(subprocess.Popen(web, cwd=root, start_new_session=True, env=web_env))
         while all(child.poll() is None for child in children):
             time.sleep(0.3)
     except KeyboardInterrupt:
